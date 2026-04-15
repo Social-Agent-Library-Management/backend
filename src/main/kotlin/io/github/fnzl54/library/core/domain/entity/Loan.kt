@@ -24,4 +24,13 @@ class Loan(
     val loanDate: LocalDate,
     @Column(nullable = false)
     val dueDate: LocalDate,
-) : BaseEntity()
+    @Column
+    var returnDate: LocalDate? = null,
+) : BaseEntity() {
+    fun isReturned(): Boolean = returnDate != null
+
+    fun returnBook(returnDate: LocalDate) {
+        this.returnDate = returnDate
+        this.bookItem.status = BookItem.Status.AVAILABLE
+    }
+}
