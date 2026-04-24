@@ -27,7 +27,20 @@ class Loan(
     @Column
     var returnDate: LocalDate? = null,
 ) : BaseEntity() {
+    enum class LoanStatus {
+        BORROWED,
+        OVERDUE,
+        RETURNED,
+    }
+
     fun isReturned(): Boolean = returnDate != null
+
+    fun computeLoanStatus(today: LocalDate = LocalDate.now()): LoanStatus =
+        when {
+            returnDate != null -> LoanStatus.RETURNED
+            dueDate < today -> LoanStatus.OVERDUE
+            else -> LoanStatus.BORROWED
+        }
 
     fun returnBook(returnDate: LocalDate) {
         this.returnDate = returnDate

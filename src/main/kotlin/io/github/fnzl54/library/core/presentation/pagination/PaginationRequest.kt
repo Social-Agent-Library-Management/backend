@@ -3,7 +3,7 @@ package io.github.fnzl54.library.core.presentation.pagination
 import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.data.domain.PageRequest
 
-open class BasePaginationRequest(
+open class PaginationRequest(
     @field:Schema(description = "페이지 번호 (1부터 시작, 기본값: 1)", example = "1")
     open val page: Int = DEFAULT_PAGE,
     @field:Schema(description = "페이지 크기 (기본값: 10, 최대: 100)", example = "10")
