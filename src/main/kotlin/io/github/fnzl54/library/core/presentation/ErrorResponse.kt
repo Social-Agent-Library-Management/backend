@@ -1,6 +1,5 @@
 package io.github.fnzl54.library.core.presentation
 
-import io.github.fnzl54.library.core.application.ExternalResponse
 import io.github.fnzl54.library.core.exception.DomainException
 import io.github.fnzl54.library.core.exception.error.BaseErrorCode
 import java.time.LocalDateTime
