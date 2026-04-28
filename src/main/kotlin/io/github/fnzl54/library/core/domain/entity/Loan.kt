@@ -16,10 +16,10 @@ class Loan(
     @JoinColumn(name = "book_item_id", nullable = false)
     val bookItem: BookItem,
     @Column(nullable = false)
-    val name: String,
+    var name: String,
     @Column(nullable = false)
-    val department: String,
-    val email: String? = null,
+    var department: String,
+    var email: String? = null,
     @Column(nullable = false)
     val loanDate: LocalDate,
     @Column(nullable = false)
@@ -45,5 +45,15 @@ class Loan(
     fun returnBook(returnDate: LocalDate) {
         this.returnDate = returnDate
         this.bookItem.status = BookItem.Status.AVAILABLE
+    }
+
+    fun update(
+        name: String,
+        department: String,
+        email: String?,
+    ) {
+        this.name = name
+        this.department = department
+        this.email = email
     }
 }
