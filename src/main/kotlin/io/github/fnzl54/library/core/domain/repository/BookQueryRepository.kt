@@ -1,7 +1,9 @@
 package io.github.fnzl54.library.core.domain.repository
 
+import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.core.types.Projections
-import com.querydsl.core.types.dsl.BooleanExpression
+import com.querydsl.core.types.dsl.Expressions
+import com.querydsl.core.types.dsl.NumberExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
 import io.github.fnzl54.library.core.domain.entity.BookItem
 import io.github.fnzl54.library.core.domain.entity.QBook.book
@@ -37,11 +39,15 @@ class BookQueryRepository(
         request: BookSearchRequest,
         pageable: Pageable,
     ): Page<BookSummary> {
+        val score = scoreExpression(request.keyword)
         val predicates =
             arrayOf(
                 book.deleted.isFalse,
-                keywordContains(request.keyword),
+                score?.gt(0.0),
             )
+        val orderBy: Array<OrderSpecifier<*>> =
+            if (score != null) arrayOf(score.desc(), book.id.asc())
+            else arrayOf(book.title.asc(), book.id.asc())
 
         val content =
             jpaQueryFactory
@@ -56,7 +62,7 @@ class BookQueryRepository(
                     ),
                 ).from(book)
                 .where(*predicates)
-                .orderBy(book.title.asc(), book.id.asc())
+                .orderBy(*orderBy)
                 .offset(pageable.offset)
                 .limit(pageable.pageSize.toLong())
                 .fetch()
@@ -90,9 +96,31 @@ class BookQueryRepository(
             .fetch()
     }
 
-    private fun keywordContains(keyword: String?): BooleanExpression? =
-        keyword?.takeIf { it.isNotBlank() }?.let { kw ->
-            book.title.containsIgnoreCase(kw)
-                .or(book.author.containsIgnoreCase(kw))
-        }
+    private fun scoreExpression(keyword: String?): NumberExpression<Double>? {
+        val expression = toBooleanModeExpression(keyword) ?: return null
+        return Expressions.numberTemplate(
+            Double::class.javaObjectType,
+            "function('match_against', {0}, {1}, {2})",
+            book.title,
+            book.author,
+            expression,
+        )
+    }
+
+    private fun toBooleanModeExpression(keyword: String?): String? {
+        val trimmed = keyword?.trim().orEmpty()
+        if (trimmed.isBlank()) return null
+        val tokens =
+            trimmed
+                .split(WHITESPACE)
+                .map { it.replace(BOOLEAN_OPERATORS, "") }
+                .filter { it.isNotBlank() }
+        if (tokens.isEmpty()) return null
+        return tokens.joinToString(" ") { "+$it*" }
+    }
+
+    companion object {
+        private val WHITESPACE = "\\s+".toRegex()
+        private val BOOLEAN_OPERATORS = "[+\\-><()~*\"@\\\\]".toRegex()
+    }
 }
