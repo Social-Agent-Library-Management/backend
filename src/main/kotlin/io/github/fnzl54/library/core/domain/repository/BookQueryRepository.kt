@@ -2,6 +2,7 @@ package io.github.fnzl54.library.core.domain.repository
 
 import com.querydsl.core.types.Projections
 import com.querydsl.core.types.dsl.BooleanExpression
+import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import io.github.fnzl54.library.core.domain.entity.BookItem
 import io.github.fnzl54.library.core.domain.entity.QBook.book
@@ -90,9 +91,32 @@ class BookQueryRepository(
             .fetch()
     }
 
-    private fun keywordContains(keyword: String?): BooleanExpression? =
-        keyword?.takeIf { it.isNotBlank() }?.let { kw ->
-            book.title.containsIgnoreCase(kw)
-                .or(book.author.containsIgnoreCase(kw))
-        }
+    private fun keywordContains(keyword: String?): BooleanExpression? {
+        val expression = toBooleanModeExpression(keyword) ?: return null
+        return Expressions
+            .numberTemplate(
+                Double::class.javaObjectType,
+                "function('match_against', {0}, {1}, {2})",
+                book.title,
+                book.author,
+                expression,
+            ).gt(0.0)
+    }
+
+    private fun toBooleanModeExpression(keyword: String?): String? {
+        val trimmed = keyword?.trim().orEmpty()
+        if (trimmed.isBlank()) return null
+        val tokens =
+            trimmed
+                .split(WHITESPACE)
+                .map { it.replace(BOOLEAN_OPERATORS, "") }
+                .filter { it.isNotBlank() }
+        if (tokens.isEmpty()) return null
+        return tokens.joinToString(" ") { "+$it*" }
+    }
+
+    companion object {
+        private val WHITESPACE = "\\s+".toRegex()
+        private val BOOLEAN_OPERATORS = "[+\\-><()~*\"@\\\\]".toRegex()
+    }
 }
