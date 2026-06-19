@@ -55,6 +55,7 @@ $RECYCLE.BIN/
 
 # Docker
 docker/mysql/db
+docker/elasticsearch/data
 !docker/sample.env
 docker/.DS_Store
 

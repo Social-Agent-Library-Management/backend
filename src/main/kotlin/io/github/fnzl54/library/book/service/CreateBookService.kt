@@ -1,6 +1,7 @@
 package io.github.fnzl54.library.book.service
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.github.fnzl54.library.book.search.event.BookChangedEvent
 import io.github.fnzl54.library.core.application.BaseRequest
 import io.github.fnzl54.library.core.application.BaseResponse
 import io.github.fnzl54.library.core.application.BaseService
@@ -8,6 +9,7 @@ import io.github.fnzl54.library.core.domain.entity.Book
 import io.github.fnzl54.library.core.domain.repository.BookRepository
 import io.github.fnzl54.library.core.exception.DomainException
 import io.github.fnzl54.library.core.exception.error.BaseErrorCode
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class CreateBookService(
     private val bookRepository: BookRepository,
+    private val eventPublisher: ApplicationEventPublisher,
 ) : BaseService<CreateBookService.Request, CreateBookService.Result>() {
     override fun doExecute(request: Request): Result {
         if (!request.isbn.isNullOrBlank()) {
@@ -35,6 +38,10 @@ class CreateBookService(
             )
 
         bookRepository.save(book)
+
+        eventPublisher.publishEvent(
+            BookChangedEvent(bookId = requireNotNull(book.id) { "저장된 도서의 ID가 존재하지 않습니다." }),
+        )
 
         return Result(book)
     }

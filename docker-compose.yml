@@ -1,3 +1,5 @@
+name: library
+
 services:
   mysql:
     image: mysql:8.0
@@ -17,3 +19,28 @@ services:
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+
+  elasticsearch:
+    build:
+      context: ./docker/elasticsearch
+    container_name: loan-manager-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      TZ: Asia/Seoul
+    ports:
+      - "9200:9200"
+    volumes:
+      - ./docker/elasticsearch/data:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.18.8
+    container_name: loan-manager-kibana
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      TZ: Asia/Seoul
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch

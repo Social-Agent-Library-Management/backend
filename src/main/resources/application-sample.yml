@@ -12,6 +12,8 @@ spring:
       hibernate:
         format_sql:
     show-sql: true
+  elasticsearch:
+    uris:
 
 springdoc:
   enabled:

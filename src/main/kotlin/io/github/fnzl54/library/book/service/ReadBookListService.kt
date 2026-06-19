@@ -1,6 +1,7 @@
 package io.github.fnzl54.library.book.service
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.github.fnzl54.library.book.search.BookSearchQueryRepository
 import io.github.fnzl54.library.core.application.BaseRequest
 import io.github.fnzl54.library.core.application.BaseResponse
 import io.github.fnzl54.library.core.application.BaseService
@@ -14,11 +15,11 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional(readOnly = true)
 class ReadBookListService(
+    private val bookSearchQueryRepository: BookSearchQueryRepository,
     private val bookQueryRepository: BookQueryRepository,
 ) : BaseService<ReadBookListService.Request, ReadBookListService.Response>() {
     override fun doExecute(request: Request): Response {
-        val searchRequest = BookQueryRepository.BookSearchRequest(keyword = request.keyword)
-        val bookPage = bookQueryRepository.findBooksByKeyword(searchRequest, request.pageable)
+        val bookPage = bookSearchQueryRepository.search(request.keyword, request.pageable)
 
         val bookIds = bookPage.content.map { it.bookId }
         val itemsByBookId =
