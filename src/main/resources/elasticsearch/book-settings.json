@@ -15,11 +15,17 @@
         "token_chars": ["letter", "digit"]
       }
     },
+    "filter": {
+      "ko_pos_filter": {
+        "type": "nori_part_of_speech",
+        "stoptags": ["E", "J", "SP", "SSC", "SSO", "SC", "SE", "XSV", "UNA", "NA", "VSV"]
+      }
+    },
     "analyzer": {
       "korean": {
         "type": "custom",
         "tokenizer": "korean_nori_tokenizer",
-        "filter": ["nori_part_of_speech", "lowercase"]
+        "filter": ["ko_pos_filter", "lowercase"]
       },
       "edge_ngram_index": {
         "type": "custom",

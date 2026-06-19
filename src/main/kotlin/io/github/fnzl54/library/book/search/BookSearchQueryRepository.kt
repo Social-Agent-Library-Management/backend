@@ -1,5 +1,6 @@
 package io.github.fnzl54.library.book.search
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator
 import co.elastic.clients.elasticsearch._types.query_dsl.Query
 import io.github.fnzl54.library.core.domain.document.BookDocument
 import io.github.fnzl54.library.core.domain.repository.BookQueryRepository
@@ -62,24 +63,27 @@ class BookSearchQueryRepository(
             Query.of { q ->
                 q.bool { b ->
                     b
-                        // 형태소(Nori) 기반 본문 매칭 + 오타(fuzziness) 보정
+                        // 본문(Nori): 모든 토큰이 매칭(AND)돼야 하는 정밀 절. fuzziness는 걸지 않는다.
+                        // 형태소에 fuzzy를 걸면 흔한 단어로 과매칭(예: 24k 코퍼스에서 오타 1건이 211건)이 난다.
                         .should { s ->
                             s.multiMatch { m ->
                                 m
                                     .query(keyword)
                                     .fields("title^3", "author^2", "publisher")
-                                    .fuzziness("AUTO")
+                                    .operator(Operator.And)
                             }
                         }
-                        // edge-ngram 기반 1글자/접두 매칭 + 오타(fuzziness) 보정.
-                        // .ngram은 검색 시 whitespace 분석기라 단어를 통째로 토큰화하므로,
-                        // Nori가 음절 단위로 쪼개 fuzziness가 안 먹는 한글 오타도 여기서 보정된다.
+                        // edge-ngram: 1글자/접두 매칭 + 오타(fuzziness) 보정 담당.
+                        // whitespace 검색 분석기로 단어를 통째 토큰화하므로 한글 오타도 여기서 잡되,
+                        // prefix_length=2로 앞 2글자는 고정해 fuzzy 확장 범위를 좁힌다.
                         .should { s ->
                             s.multiMatch { m ->
                                 m
                                     .query(keyword)
                                     .fields("title.ngram^2", "author.ngram")
+                                    .operator(Operator.And)
                                     .fuzziness("AUTO")
+                                    .prefixLength(2)
                             }
                         }.minimumShouldMatch("1")
                 }
