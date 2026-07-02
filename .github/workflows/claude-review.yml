@@ -34,7 +34,9 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          show_full_output: true
           # 모델: Sonnet 고정
           claude_args: |
             --model claude-sonnet-5
