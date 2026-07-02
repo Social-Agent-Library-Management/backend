@@ -8,8 +8,8 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
-  issues: read
+  pull-requests: write
+  issues: write
   id-token: write
 
 jobs:
@@ -36,10 +36,8 @@ jobs:
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           show_full_output: true
-          claude_args: --model claude-sonnet-5
+          claude_args: --model claude-sonnet-5 --allowedTools "Bash" "Read" "Write" "WebFetch" "WebSearch"
           prompt: |
-            /code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number || github.event.issue.number }}
-
             ## 리뷰 지침
             - 모든 리뷰 코멘트, PR 요약, 피드백은 반드시 한국어로 작성하세요.
             - 이 프로젝트는 Kotlin + Spring Boot입니다. (Kotlin 문법이지만 Java 스타일로 작성될 가능성이 있습니다.)
@@ -69,3 +67,5 @@ jobs:
             ### 5. 유지보수성
             - 에러 처리가 프로젝트의 기존 패턴(BaseErrorCode → DomainException)을 따르는지 확인
             - 중복 코드가 있다면 공통화 가능 여부 검토
+
+            /code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number || github.event.issue.number }}
