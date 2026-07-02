@@ -36,7 +36,7 @@ jobs:
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           show_full_output: true
-          claude_args: --model claude-sonnet-5
+          claude_args: --model claude-sonnet-5 --allowedTools "Bash" "Read" "Write" "WebFetch" "WebSearch"
           prompt: |
             ## 리뷰 지침
             - 모든 리뷰 코멘트, PR 요약, 피드백은 반드시 한국어로 작성하세요.
