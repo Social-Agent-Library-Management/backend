@@ -39,7 +39,7 @@ jobs:
           show_full_output: true
           claude_args: |
             --model claude-sonnet-5
-            --allowedTools "Bash(gh pr list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*)"
+            --allowedTools "Bash(gh*)"
           prompt: |
             리뷰 대상 PR 번호: #${{ github.event.pull_request.number || github.event.issue.number }}
 
