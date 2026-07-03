@@ -100,10 +100,9 @@ class BookQueryRepository(
         val expression = toBooleanModeExpression(keyword) ?: return null
         return Expressions.numberTemplate(
             Double::class.javaObjectType,
-            "function('match_against', {0}, {1}, {2})",
+            "function('match_against', {0}, {1}, '$expression')",
             book.title,
             book.author,
-            expression,
         )
     }
 

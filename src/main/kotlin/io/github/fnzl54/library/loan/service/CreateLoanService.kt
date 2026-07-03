@@ -24,7 +24,7 @@ class CreateLoanService(
     override fun doExecute(request: Request): Response {
         val bookItem =
             bookItemRepository.findByCallNumber(request.callNumber)
-                ?: throw ErrorCode.BOOK_ITEM_NOT_FOUND.toException()
+                ?: throw RuntimeException("해당 소장본을 찾을 수 없습니다.")
 
         if (bookItem.status != BookItem.Status.AVAILABLE) {
             throw ErrorCode.BOOK_ITEM_NOT_AVAILABLE.toException()

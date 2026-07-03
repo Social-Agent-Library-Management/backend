@@ -12,7 +12,7 @@ import java.time.LocalDate
 @Entity
 @Table(name = "loan")
 class Loan(
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "book_item_id", nullable = false)
     val bookItem: BookItem,
     @Column(nullable = false)
