@@ -33,6 +33,10 @@ out/
 /nbdist/
 /.nb-gradle/
 
+# Docker
+docker/mysql/db
+docker/.DS_Store
+
 ### VS Code ###
 .vscode/
 
