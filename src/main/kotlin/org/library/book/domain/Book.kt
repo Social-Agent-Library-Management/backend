@@ -30,6 +30,14 @@ class Book(
         require(author.isNotBlank()) { "저자는 비어 있을 수 없습니다." }
     }
 
+    fun update(title: String, author: String, isbn: String?) {
+        require(title.isNotBlank()) { "제목은 비어 있을 수 없습니다." }
+        require(author.isNotBlank()) { "저자는 비어 있을 수 없습니다." }
+        this.title = title
+        this.author = author
+        this.isbn = normalizeIsbn(isbn)
+    }
+
     companion object {
 
         fun normalizeIsbn(isbn: String?): String? = isbn?.trim()?.takeIf { it.isNotBlank() }
