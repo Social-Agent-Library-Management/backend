@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.library.book.application.CreateBookService
+import org.library.book.application.DeleteBookService
 import org.library.book.application.GetBookService
 import org.library.book.application.UpdateBookService
 import org.library.book.domain.error.BookError
@@ -16,6 +17,7 @@ import org.library.core.application.getOrThrow
 import org.library.core.swagger.ApiErrorCode
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -31,6 +33,7 @@ class BookController(
     private val createBookService: CreateBookService,
     private val getBookService: GetBookService,
     private val updateBookService: UpdateBookService,
+    private val deleteBookService: DeleteBookService,
 ) {
 
     @Operation(
@@ -66,4 +69,13 @@ class BookController(
         @Valid @RequestBody request: UpdateBookService.Request,
     ): BookResponse =
         updateBookService.execute(id, request).getOrThrow()
+
+    @Operation(summary = "도서 삭제", description = "도서를 소프트 삭제한다.")
+    @ApiResponse(responseCode = "204", description = "도서 삭제 성공")
+    @ApiErrorCode(errorCodes = [BookError::class], only = ["NOT_FOUND"])
+    @DeleteMapping("/{id}")
+    fun delete(@Parameter(description = "도서 ID") @PathVariable id: Long): ResponseEntity<Unit> {
+        deleteBookService.execute(id).getOrThrow()
+        return ResponseEntity.noContent().build()
+    }
 }
