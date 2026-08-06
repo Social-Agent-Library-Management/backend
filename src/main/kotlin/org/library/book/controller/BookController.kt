@@ -10,11 +10,14 @@ import jakarta.validation.Valid
 import org.library.book.application.CreateBookService
 import org.library.book.application.DeleteBookService
 import org.library.book.application.GetBookService
+import org.library.book.application.SearchBooksService
 import org.library.book.application.UpdateBookService
 import org.library.book.domain.error.BookError
 import org.library.book.dto.BookResponse
+import org.library.core.presentation.PageRequestParams
 import org.library.core.application.getOrThrow
 import org.library.core.swagger.ApiErrorCode
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "Book", description = "도서 관리 API")
@@ -32,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController
 class BookController(
     private val createBookService: CreateBookService,
     private val getBookService: GetBookService,
+    private val searchBooksService: SearchBooksService,
     private val updateBookService: UpdateBookService,
     private val deleteBookService: DeleteBookService,
 ) {
@@ -57,6 +62,22 @@ class BookController(
     @GetMapping("/{id}")
     fun get(@Parameter(description = "도서 ID") @PathVariable id: Long): BookResponse =
         getBookService.execute(id).getOrThrow()
+
+    @Operation(
+        summary = "도서 목록·검색",
+        description = "검색어가 없으면 전체 목록을, 있으면 제목·저자 부분 일치 결과를 최신 등록순으로 반환한다.",
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "도서 목록·검색 성공",
+        content = [Content(schema = Schema(implementation = SearchBooksService.Response::class))],
+    )
+    @GetMapping("/search")
+    fun search(
+        @Parameter(description = "검색어 (없으면 전체 조회)") @RequestParam(required = false) q: String?,
+        @ParameterObject params: PageRequestParams,
+    ): SearchBooksService.Response =
+        searchBooksService.execute(q, params)
 
     @Operation(
         summary = "도서 수정",
