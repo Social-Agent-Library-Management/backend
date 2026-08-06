@@ -1,8 +1,10 @@
 package org.library.core.exception
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.hibernate.exception.ConstraintViolationException
 import org.library.core.logging.TraceIdFilter
 import org.slf4j.MDC
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
@@ -22,6 +24,19 @@ class SystemExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(DomainException::class)
     fun handleDomain(e: DomainException): ProblemDetail =
         problem(e.errorCode.status, e.errorCode.code, e.errorCode.message)
+
+    @ExceptionHandler(DataIntegrityViolationException::class)
+    fun handleDataIntegrity(e: DataIntegrityViolationException): ProblemDetail {
+        val kind = (e.cause as? ConstraintViolationException)?.kind
+        if (kind != ConstraintViolationException.ConstraintKind.UNIQUE) return handleUnexpected(e)
+
+        log.warn(e) { "Unique constraint violation" }
+        return problem(
+            CommonErrorCode.DATA_CONFLICT.status,
+            CommonErrorCode.DATA_CONFLICT.code,
+            CommonErrorCode.DATA_CONFLICT.message,
+        )
+    }
 
     @ExceptionHandler(Exception::class)
     fun handleUnexpected(e: Exception): ProblemDetail {
