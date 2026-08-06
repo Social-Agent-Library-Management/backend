@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.library.book.application.CreateBookService
 import org.library.book.application.GetBookService
+import org.library.book.application.UpdateBookService
 import org.library.book.domain.error.BookError
 import org.library.book.dto.BookResponse
 import org.library.core.application.getOrThrow
@@ -16,6 +17,7 @@ import org.library.core.swagger.ApiErrorCode
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController
 class BookController(
     private val createBookService: CreateBookService,
     private val getBookService: GetBookService,
+    private val updateBookService: UpdateBookService,
 ) {
 
     @Operation(
@@ -51,4 +54,16 @@ class BookController(
     @GetMapping("/{id}")
     fun get(@Parameter(description = "도서 ID") @PathVariable id: Long): BookResponse =
         getBookService.execute(id).getOrThrow()
+
+    @Operation(
+        summary = "도서 수정",
+        description = "도서의 제목·저자·ISBN을 수정한다. 요청 본문이 곧 최종 상태이며, ISBN을 생략하면 기존 값이 지워진다.",
+    )
+    @ApiErrorCode(errorCodes = [BookError::class], only = ["NOT_FOUND", "DUPLICATE_ISBN"])
+    @PatchMapping("/{id}")
+    fun update(
+        @Parameter(description = "도서 ID") @PathVariable id: Long,
+        @Valid @RequestBody request: UpdateBookService.Request,
+    ): BookResponse =
+        updateBookService.execute(id, request).getOrThrow()
 }
