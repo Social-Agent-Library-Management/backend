@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface BookRepository : JpaRepository<Book, Long> {
 
     fun findByIsbnAndDeletedAtIsNull(isbn: String): Book?
+
+    fun findByIdAndDeletedAtIsNull(id: Long): Book?
 }
