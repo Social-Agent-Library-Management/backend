@@ -4,4 +4,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface BookItemRepository : JpaRepository<BookItem, Long> {
 
+    fun findByManagementNumber(managementNumber: String): BookItem?
 }
