@@ -33,6 +33,13 @@ class BookItem(
         }
     }
 
+    fun changeStatus(status: BookItemStatus) {
+        require(status == BookItemStatus.LOST || status == BookItemStatus.DISPOSED) {
+            "분실 또는 폐기 상태로만 변경할 수 있습니다."
+        }
+        this.status = status
+    }
+
     companion object {
 
         val MANAGEMENT_NUMBER_REGEX = Regex("^[^-\\s]+-\\d+$")
