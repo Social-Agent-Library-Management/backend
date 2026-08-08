@@ -5,13 +5,16 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import io.swagger.v3.oas.annotations.Parameter
 import jakarta.validation.Valid
 import org.library.core.application.getOrThrow
 import org.library.core.swagger.ApiErrorCode
 import org.library.loan.application.CreateLoanService
+import org.library.loan.application.ReturnLoanService
 import org.library.loan.domain.error.LoanError
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/loans")
 class LoanController(
     private val createLoanService: CreateLoanService,
+    private val returnLoanService: ReturnLoanService,
 ) {
 
     @Operation(
@@ -39,4 +43,16 @@ class LoanController(
         val loan = createLoanService.execute(request).getOrThrow()
         return ResponseEntity.status(HttpStatus.CREATED).body(loan)
     }
+
+    @Operation(
+        summary = "반납 처리",
+        description = "대출 건을 반납 처리한다. 실제 반납일을 지정하지 않으면 오늘 날짜로 기록되며, 소장본 상태가 AVAILABLE로 돌아간다.",
+    )
+    @ApiErrorCode(errorCodes = [LoanError::class], only = ["LOAN_NOT_FOUND", "LOAN_NOT_ON_LOAN"])
+    @PostMapping("/{loanId}/return")
+    fun returnLoan(
+        @Parameter(description = "대출 ID") @PathVariable loanId: Long,
+        @RequestBody(required = false) request: ReturnLoanService.Request?,
+    ): ReturnLoanService.Response =
+        returnLoanService.execute(loanId, request ?: ReturnLoanService.Request()).getOrThrow()
 }
