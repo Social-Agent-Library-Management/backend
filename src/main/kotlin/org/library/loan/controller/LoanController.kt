@@ -1,23 +1,29 @@
 package org.library.loan.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
-import io.swagger.v3.oas.annotations.Parameter
 import jakarta.validation.Valid
 import org.library.core.application.getOrThrow
+import org.library.core.presentation.PageRequestParams
 import org.library.core.swagger.ApiErrorCode
 import org.library.loan.application.CreateLoanService
 import org.library.loan.application.ReturnLoanService
+import org.library.loan.application.SearchLoansService
+import org.library.loan.domain.LoanStatus
 import org.library.loan.domain.error.LoanError
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "Loan", description = "대출 관리 API")
@@ -26,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController
 class LoanController(
     private val createLoanService: CreateLoanService,
     private val returnLoanService: ReturnLoanService,
+    private val searchLoansService: SearchLoansService,
 ) {
 
     @Operation(
@@ -55,4 +62,18 @@ class LoanController(
         @RequestBody(required = false) request: ReturnLoanService.Request?,
     ): ReturnLoanService.Response =
         returnLoanService.execute(loanId, request ?: ReturnLoanService.Request()).getOrThrow()
+
+    @Operation(
+        summary = "대출 내역 검색·목록",
+        description = "도서명·대출자 이름·부서·상태로 대출 내역을 검색한다. 기본 정렬은 대여일 내림차순.",
+    )
+    @GetMapping
+    fun search(
+        @Parameter(description = "도서명 부분 일치") @RequestParam(required = false) bookTitle: String?,
+        @Parameter(description = "대출자 이름 부분 일치") @RequestParam(required = false) borrowerName: String?,
+        @Parameter(description = "부서명 부분 일치") @RequestParam(required = false) department: String?,
+        @Parameter(description = "대출 상태") @RequestParam(required = false) status: LoanStatus?,
+        @ParameterObject params: PageRequestParams,
+    ): SearchLoansService.Response =
+        searchLoansService.execute(bookTitle, borrowerName, department, status, params)
 }
