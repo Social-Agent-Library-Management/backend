@@ -40,6 +40,16 @@ class BookItem(
         this.status = status
     }
 
+    fun markOnLoan() {
+        require(status == BookItemStatus.AVAILABLE) { "대출 가능한 상태가 아닙니다." }
+        status = BookItemStatus.ON_LOAN
+    }
+
+    fun markAvailable() {
+        require(status == BookItemStatus.ON_LOAN) { "대출 중인 상태가 아닙니다." }
+        status = BookItemStatus.AVAILABLE
+    }
+
     companion object {
 
         val MANAGEMENT_NUMBER_REGEX = Regex("^[^-\\s]+-\\d+$")
