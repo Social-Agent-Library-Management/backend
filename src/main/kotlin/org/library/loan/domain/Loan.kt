@@ -75,6 +75,11 @@ class Loan(
 
     fun isOverdue(today: LocalDate): Boolean = status == LoanStatus.ON_LOAN && dueDate < today
 
+    fun currentOverdueDays(today: LocalDate): Long {
+        require(dueDate < today) { "연체 상태가 아닌 대출입니다." }
+        return ChronoUnit.DAYS.between(dueDate, today)
+    }
+
     fun overdueDays(): Long? {
         val returned = returnedAt ?: return null
         return ChronoUnit.DAYS.between(dueDate, returned).takeIf { it > 0 }

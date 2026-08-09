@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import java.time.LocalDate
 
 interface LoanRepository : JpaRepository<Loan, Long> {
 
@@ -28,6 +29,21 @@ interface LoanRepository : JpaRepository<Loan, Long> {
         @Param("borrowerName") borrowerName: String?,
         @Param("department") department: String?,
         @Param("status") status: LoanStatus?,
+        pageable: Pageable,
+    ): Page<Loan>
+
+    @Query(
+        """
+        select l from Loan l
+        where l.status = :status
+          and l.dueDate < :today
+          and (:department is null or lower(l.department) like lower(concat('%', :department, '%')))
+        """,
+    )
+    fun findOverdue(
+        @Param("status") status: LoanStatus,
+        @Param("today") today: LocalDate,
+        @Param("department") department: String?,
         pageable: Pageable,
     ): Page<Loan>
 }

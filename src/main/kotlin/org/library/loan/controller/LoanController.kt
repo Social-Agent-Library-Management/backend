@@ -11,6 +11,7 @@ import org.library.core.application.getOrThrow
 import org.library.core.presentation.PageRequestParams
 import org.library.core.swagger.ApiErrorCode
 import org.library.loan.application.CreateLoanService
+import org.library.loan.application.OverdueLoansService
 import org.library.loan.application.ReturnLoanService
 import org.library.loan.application.SearchLoansService
 import org.library.loan.domain.LoanStatus
@@ -33,6 +34,7 @@ class LoanController(
     private val createLoanService: CreateLoanService,
     private val returnLoanService: ReturnLoanService,
     private val searchLoansService: SearchLoansService,
+    private val overdueLoansService: OverdueLoansService,
 ) {
 
     @Operation(
@@ -76,4 +78,16 @@ class LoanController(
         @ParameterObject params: PageRequestParams,
     ): SearchLoansService.Response =
         searchLoansService.execute(bookTitle, borrowerName, department, status, params)
+
+    @Operation(
+        summary = "연체 목록",
+        description = "대출 중이며 반납 예정일이 지난 대출 건을 연체 경과일 내림차순으로 조회한다. " +
+            "연체 여부·경과일은 저장하지 않고 조회 시점 날짜 기준으로 계산한다. 유예 기간 없이 반납 예정일 익일부터 연체로 집계된다.",
+    )
+    @GetMapping("/overdue")
+    fun overdue(
+        @Parameter(description = "부서명 부분 일치") @RequestParam(required = false) department: String?,
+        @ParameterObject params: PageRequestParams,
+    ): OverdueLoansService.Response =
+        overdueLoansService.execute(department, params)
 }
