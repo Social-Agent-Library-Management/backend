@@ -22,6 +22,7 @@ interface LoanRepository : JpaRepository<Loan, Long> {
           and (:borrowerName is null or lower(l.borrowerName) like lower(concat('%', :borrowerName, '%')))
           and (:department is null or lower(l.department) like lower(concat('%', :department, '%')))
           and (:status is null or l.status = :status)
+          and (:overdueOnly = false or l.dueDate < :today)
         """,
     )
     fun search(
@@ -29,6 +30,8 @@ interface LoanRepository : JpaRepository<Loan, Long> {
         @Param("borrowerName") borrowerName: String?,
         @Param("department") department: String?,
         @Param("status") status: LoanStatus?,
+        @Param("overdueOnly") overdueOnly: Boolean,
+        @Param("today") today: LocalDate,
         pageable: Pageable,
     ): Page<Loan>
 

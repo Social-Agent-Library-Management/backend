@@ -21,16 +21,31 @@ class SearchLoansService(
         bookTitle: String?,
         borrowerName: String?,
         department: String?,
-        status: LoanStatus?,
+        status: LoanSearchStatus?,
         params: PageRequestParams,
     ): Response {
         val pageRequest = params.toPageRequest(Sort.by(Sort.Direction.DESC, "loanDate"))
-        val page = loanRepository.search(bookTitle, borrowerName, department, status, pageRequest)
         val today = LocalDate.now()
+        val page = loanRepository.search(
+            bookTitle = bookTitle,
+            borrowerName = borrowerName,
+            department = department,
+            status = status?.loanStatus,
+            overdueOnly = status == LoanSearchStatus.OVERDUE,
+            today = today,
+            pageable = pageRequest,
+        )
         return Response(
             loans = page.content.map { LoanSummary.from(it, today) },
             pagination = Pagination.from(page),
         )
+    }
+
+    @Schema(name = "LoanSearchStatus", description = "대출 검색 상태 필터")
+    enum class LoanSearchStatus(val loanStatus: LoanStatus) {
+        ON_LOAN(LoanStatus.ON_LOAN),
+        OVERDUE(LoanStatus.ON_LOAN),
+        RETURNED(LoanStatus.RETURNED),
     }
 
     @Schema(name = "LoanSummary")
