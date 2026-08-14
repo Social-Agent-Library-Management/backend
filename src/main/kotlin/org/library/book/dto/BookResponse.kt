@@ -12,6 +12,8 @@ data class BookResponse(
     val title: String,
     @field:Schema(description = "저자", example = "로버트 마틴")
     val author: String,
+    @field:Schema(description = "출판사", example = "인사이트")
+    val publisher: String,
     @field:Schema(description = "ISBN (미입력 가능)", example = "9788966262472", nullable = true)
     val isbn: String?,
     @field:Schema(description = "등록 일시")
@@ -22,6 +24,7 @@ data class BookResponse(
             id = book.id,
             title = book.title,
             author = book.author,
+            publisher = book.publisher,
             isbn = book.isbn,
             createdAt = book.createdAt,
         )

@@ -30,7 +30,7 @@ class UpdateBookService(
             }
         }
 
-        book.update(title = request.title, author = request.author, isbn = isbn)
+        book.update(title = request.title, author = request.author, isbn = isbn, publisher = request.publisher)
         return BookResponse.from(book).ok()
     }
 
@@ -42,6 +42,9 @@ class UpdateBookService(
         @field:NotBlank
         @field:Schema(description = "저자", example = "로버트 마틴")
         val author: String,
+        @field:NotBlank
+        @field:Schema(description = "출판사", example = "인사이트")
+        val publisher: String,
         @field:Schema(description = "ISBN (미입력 시 기존 값이 지워진다)", example = "9788966262472", nullable = true)
         val isbn: String? = null,
     )
