@@ -24,7 +24,7 @@ class CreateBookService(
             return BookError.DUPLICATE_ISBN.err()
         }
         val book = bookRepository.save(
-            Book(title = request.title, author = request.author, isbn = isbn),
+            Book(title = request.title, author = request.author, isbn = isbn, publisher = request.publisher),
         )
         return BookResponse.from(book).ok()
     }
@@ -37,6 +37,9 @@ class CreateBookService(
         @field:NotBlank
         @field:Schema(description = "저자", example = "로버트 마틴")
         val author: String,
+        @field:NotBlank
+        @field:Schema(description = "출판사", example = "인사이트")
+        val publisher: String,
         @field:Schema(description = "ISBN (미입력 가능)", example = "9788966262472", nullable = true)
         val isbn: String? = null,
     )
