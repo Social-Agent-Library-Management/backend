@@ -57,10 +57,10 @@ class BookController(
         return ResponseEntity.status(HttpStatus.CREATED).body(book)
     }
 
-    @Operation(summary = "도서 단건 조회", description = "ID로 도서 한 건을 조회한다.")
+    @Operation(summary = "도서 단건 조회", description = "ID로 도서 한 건을 조회한다. 소장본 목록을 함께 반환한다.")
     @ApiErrorCode(errorCodes = [BookError::class], only = ["NOT_FOUND"])
     @GetMapping("/{id}")
-    fun get(@Parameter(description = "도서 ID") @PathVariable id: Long): BookResponse =
+    fun get(@Parameter(description = "도서 ID") @PathVariable id: Long): GetBookService.Response =
         getBookService.execute(id).getOrThrow()
 
     @Operation(
