@@ -14,7 +14,6 @@ import org.library.loan.application.CreateLoanService
 import org.library.loan.application.OverdueLoansService
 import org.library.loan.application.ReturnLoanService
 import org.library.loan.application.SearchLoansService
-import org.library.loan.domain.LoanStatus
 import org.library.loan.domain.error.LoanError
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.http.HttpStatus
@@ -67,14 +66,15 @@ class LoanController(
 
     @Operation(
         summary = "대출 내역 검색·목록",
-        description = "도서명·대출자 이름·부서·상태로 대출 내역을 검색한다. 기본 정렬은 대여일 내림차순.",
+        description = "도서명·대출자 이름·부서·상태로 대출 내역을 검색한다. 기본 정렬은 대여일 내림차순. " +
+            "상태는 ON_LOAN(대출중이며 연체 아님)·OVERDUE(대출중이며 연체)·RETURNED(반납완료) 중 하나로 상호 배타적으로 필터링된다.",
     )
     @GetMapping
     fun search(
         @Parameter(description = "도서명 부분 일치") @RequestParam(required = false) bookTitle: String?,
         @Parameter(description = "대출자 이름 부분 일치") @RequestParam(required = false) borrowerName: String?,
         @Parameter(description = "부서명 부분 일치") @RequestParam(required = false) department: String?,
-        @Parameter(description = "대출 상태") @RequestParam(required = false) status: LoanStatus?,
+        @Parameter(description = "대출 상태 (ON_LOAN/OVERDUE/RETURNED)") @RequestParam(required = false) status: SearchLoansService.LoanSearchStatus?,
         @ParameterObject params: PageRequestParams,
     ): SearchLoansService.Response =
         searchLoansService.execute(bookTitle, borrowerName, department, status, params)
