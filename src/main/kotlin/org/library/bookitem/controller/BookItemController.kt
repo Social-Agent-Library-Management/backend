@@ -9,15 +9,20 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.library.bookitem.application.ChangeBookItemStatusService
 import org.library.bookitem.application.CreateBookItemService
+import org.library.bookitem.application.SearchBookItemsService
 import org.library.bookitem.domain.error.BookItemError
 import org.library.core.application.getOrThrow
+import org.library.core.presentation.PageRequestParams
 import org.library.core.swagger.ApiErrorCode
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "BookItem", description = "소장본 관리 API")
@@ -25,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController
 class BookItemController(
     private val createBookItemService: CreateBookItemService,
     private val changeBookItemStatusService: ChangeBookItemStatusService,
+    private val searchBookItemsService: SearchBookItemsService,
 ) {
 
     @Operation(
@@ -57,4 +63,16 @@ class BookItemController(
         @Valid @RequestBody request: ChangeBookItemStatusService.Request,
     ): ChangeBookItemStatusService.Response =
         changeBookItemStatusService.execute(bookItemId, request).getOrThrow()
+
+    @Operation(
+        summary = "소장본 검색·목록",
+        description = "도서명·지은이·관리번호로 소장본을 검색한다. 기본 정렬은 등록일 내림차순.",
+    )
+    @GetMapping("/bookitems")
+    fun search(
+        @Parameter(description = "도서명·지은이 부분 일치") @RequestParam(required = false) q: String?,
+        @Parameter(description = "관리번호 부분 일치") @RequestParam(required = false) managementNumber: String?,
+        @ParameterObject params: PageRequestParams,
+    ): SearchBookItemsService.Response =
+        searchBookItemsService.execute(q, managementNumber, params)
 }

@@ -1,6 +1,8 @@
 package org.library.bookitem.domain
 
 import jakarta.persistence.LockModeType
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
@@ -15,6 +17,20 @@ interface BookItemRepository : JpaRepository<BookItem, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select bi from BookItem bi where bi.managementNumber = :managementNumber")
     fun findByManagementNumberForUpdate(@Param("managementNumber") managementNumber: String): BookItem?
+
+    @Query(
+        """
+        select bi from BookItem bi
+        where bi.deletedAt is null
+          and (:bookIds is null or bi.bookId in :bookIds)
+          and (:managementNumber is null or lower(bi.managementNumber) like lower(concat('%', :managementNumber, '%')))
+        """,
+    )
+    fun search(
+        @Param("bookIds") bookIds: List<Long>?,
+        @Param("managementNumber") managementNumber: String?,
+        pageable: Pageable,
+    ): Page<BookItem>
 
     @Query(
         """
