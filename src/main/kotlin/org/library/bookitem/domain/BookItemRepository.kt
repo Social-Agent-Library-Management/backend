@@ -10,12 +10,12 @@ import org.springframework.data.repository.query.Param
 
 interface BookItemRepository : JpaRepository<BookItem, Long> {
 
-    fun findByManagementNumber(managementNumber: String): BookItem?
+    fun findByManagementNumberAndDeletedAtIsNull(managementNumber: String): BookItem?
 
     fun findAllByBookIdOrderByCreatedAtAsc(bookId: Long): List<BookItem>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select bi from BookItem bi where bi.managementNumber = :managementNumber")
+    @Query("select bi from BookItem bi where bi.managementNumber = :managementNumber and bi.deletedAt is null")
     fun findByManagementNumberForUpdate(@Param("managementNumber") managementNumber: String): BookItem?
 
     @Query(
