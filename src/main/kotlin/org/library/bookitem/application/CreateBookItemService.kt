@@ -29,7 +29,7 @@ class CreateBookItemService(
         if (!BookItem.MANAGEMENT_NUMBER_REGEX.matches(managementNumber)) {
             return BookItemError.INVALID_MANAGEMENT_NUMBER_FORMAT.err()
         }
-        if (bookItemRepository.findByManagementNumber(managementNumber) != null) {
+        if (bookItemRepository.findByManagementNumberAndDeletedAtIsNull(managementNumber) != null) {
             return BookItemError.DUPLICATE_MANAGEMENT_NUMBER.err()
         }
 
