@@ -23,4 +23,14 @@ interface BookRepository : JpaRepository<Book, Long> {
         """,
     )
     fun searchActive(@Param("q") q: String, pageable: Pageable): Page<Book>
+
+    @Query(
+        """
+        select b from Book b
+        where b.deletedAt is null
+          and (lower(b.title) like lower(concat('%', :q, '%'))
+               or lower(b.author) like lower(concat('%', :q, '%')))
+        """,
+    )
+    fun findAllByTitleContainingOrAuthorContaining(@Param("q") q: String): List<Book>
 }
