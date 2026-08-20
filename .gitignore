@@ -68,3 +68,6 @@ $RECYCLE.BIN/
 *.env
 !sample.env
 application.yml
+
+# Docker (OpenSearch data volume)
+docker/opensearch/data
