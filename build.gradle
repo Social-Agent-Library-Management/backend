@@ -43,3 +43,16 @@ kotlin {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+sourceSets {
+	devtools {
+		kotlin.srcDirs = ['src/devtools/kotlin']
+		compileClasspath += sourceSets.main.output
+		runtimeClasspath += sourceSets.main.output
+	}
+}
+
+configurations {
+	devtoolsImplementation.extendsFrom implementation
+	devtoolsRuntimeOnly.extendsFrom runtimeOnly
+}
