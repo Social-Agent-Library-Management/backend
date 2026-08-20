@@ -1,0 +1,25 @@
+{
+  "settings": {
+    "analysis": {
+      "tokenizer": {
+        "nori_mixed": { "type": "nori_tokenizer", "decompound_mode": "mixed" }
+      },
+      "analyzer": {
+        "korean_nori": {
+          "type": "custom",
+          "tokenizer": "nori_mixed",
+          "filter": ["nori_readingform", "lowercase"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "bookId": { "type": "long" },
+      "title": { "type": "text", "analyzer": "korean_nori" },
+      "author": { "type": "text", "analyzer": "korean_nori" },
+      "publisher": { "type": "keyword" },
+      "isbn": { "type": "keyword" }
+    }
+  }
+}
