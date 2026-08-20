@@ -2,9 +2,10 @@ package org.library.adapter.book.search.mysql
 
 import org.library.book.application.port.BookDocument
 import org.library.book.application.port.BookSearchPort
-import org.library.book.domain.Book
+import org.library.book.application.port.toBookDocument
 import org.library.book.domain.BookRepository
 import org.library.bookitem.domain.BookItemRepository
+import org.library.bookitem.domain.countActiveItemsByBookId
 import org.library.core.presentation.PageRequestParams
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.data.domain.Page
@@ -29,22 +30,8 @@ class MysqlFullTextBookSearchAdapter(
             else -> bookRepository.searchFullText(keyword, page.toPageRequest())
         }
 
-        val bookIds = books.content.map { it.id }
-        val bookItemCounts = if (bookIds.isEmpty()) {
-            emptyMap()
-        } else {
-            bookItemRepository.countActiveByBookIdIn(bookIds).associate { it.bookId to it.itemCount }
-        }
+        val bookItemCounts = bookItemRepository.countActiveItemsByBookId(books.content.map { it.id })
 
-        return books.map { it.toDocument(bookItemCounts[it.id] ?: 0L) }
+        return books.map { it.toBookDocument(bookItemCounts[it.id] ?: 0L) }
     }
-
-    private fun Book.toDocument(bookItemCount: Long) = BookDocument(
-        id = id,
-        title = title,
-        author = author,
-        publisher = publisher,
-        isbn = isbn,
-        bookItemCount = bookItemCount,
-    )
 }
