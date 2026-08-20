@@ -1,7 +1,14 @@
 package org.library.devtools.benchmark
 
+import org.apache.http.entity.ContentType
+import org.apache.http.entity.StringEntity
+import org.apache.http.util.EntityUtils
 import org.library.book.domain.BookRepository.Companion.FULLTEXT_MIN_SCORE
 import org.library.devtools.db.MysqlConfig
+import org.library.devtools.db.OpenSearchConfig
+import org.opensearch.client.Request
+import org.opensearch.client.RestClient
+import tools.jackson.databind.json.JsonMapper
 
 // BookRepository.searchActive와 의미적으로 동일한 LIKE 검색.
 private const val LIKE_SQL = """
@@ -34,34 +41,41 @@ private val cases = listOf(
     KeywordCase("오타(fuzzy)", "스프릥", "'스프링'의 1글자 오타"),
 )
 
-private data class AnalyzeResult(val tree: String, val totalMs: Double, val rows: Int)
+private data class MysqlResult(val tree: String, val totalMs: Double, val rows: Int)
+private data class OpenSearchResult(val ms: Double, val hits: Long)
 
 private val timingPattern = Regex("""actual time=[\d.]+\.\.([\d.]+) rows=(\d+) loops=\d+""")
 
-fun main() {
-    val likeResults = cases.map { it to runExplainAnalyze(LIKE_SQL, it.keyword) }
-    val ftResults = cases.map { it to runExplainAnalyze(FULLTEXT_SQL, it.keyword) }
+private val objectMapper = JsonMapper.builder().build()
 
-    println("## 실행계획 원본 (EXPLAIN ANALYZE)\n")
+fun main() {
+    val likeResults = cases.map { it to runMysqlExplainAnalyze(LIKE_SQL, it.keyword) }
+    val ftResults = cases.map { it to runMysqlExplainAnalyze(FULLTEXT_SQL, it.keyword) }
+
+    val osResults = OpenSearchConfig.newClient().use { client ->
+        cases.map { it to runOpenSearch(client, it.keyword) }
+    }
+
+    println("## 실행계획 원본 (MySQL EXPLAIN ANALYZE)\n")
     printTrees("LIKE 검색 (BookRepository.searchActive와 동일)", likeResults)
     printTrees("FULLTEXT(ngram) 검색 (BookRepository.searchFullText와 동일)", ftResults)
 
-    println("## 실측 응답시간 요약 (MySQL 서버 내부 실행시간, 네트워크/API 오버헤드 제외)\n")
-    println("| 케이스 | 키워드 | LIKE(ms) | LIKE rows | FULLTEXT(ms) | FT rows | 배율 | 비고 |")
-    println("|---|---|---|---|---|---|---|---|")
+    println("## 3-way 실측 응답시간 비교 (엔진 서버 내부 실행시간, 네트워크/API 오버헤드 제외)\n")
+    println("| 케이스 | 키워드 | LIKE(ms) | rows | FULLTEXT(ms) | rows | OpenSearch(ms) | hits | 비고 |")
+    println("|---|---|---|---|---|---|---|---|---|")
     cases.forEachIndexed { i, case ->
         val like = likeResults[i].second
         val ft = ftResults[i].second
-        val speedup = if (ft.totalMs > 0) "%.1fx".format(like.totalMs / ft.totalMs) else "-"
+        val os = osResults[i].second
         println(
-            "| %s | %s | %.2f | %d | %.2f | %d | %s | %s |".format(
-                case.label, case.keyword, like.totalMs, like.rows, ft.totalMs, ft.rows, speedup, case.note,
+            "| %s | %s | %.2f | %d | %.2f | %d | %.2f | %d | %s |".format(
+                case.label, case.keyword, like.totalMs, like.rows, ft.totalMs, ft.rows, os.ms, os.hits, case.note,
             ),
         )
     }
 }
 
-private fun printTrees(title: String, results: List<Pair<KeywordCase, AnalyzeResult>>) {
+private fun printTrees(title: String, results: List<Pair<KeywordCase, MysqlResult>>) {
     println("### $title\n")
     results.forEach { (case, result) ->
         println("**${case.label} (\"${case.keyword}\")**")
@@ -71,12 +85,37 @@ private fun printTrees(title: String, results: List<Pair<KeywordCase, AnalyzeRes
     }
 }
 
-private fun runExplainAnalyze(sql: String, keyword: String): AnalyzeResult {
+private fun runMysqlExplainAnalyze(sql: String, keyword: String): MysqlResult {
     val argCount = sql.count { it == '?' }
     val args = Array(argCount) { keyword as Any }
     val tree = MysqlConfig.jdbcTemplate.queryForObject("EXPLAIN ANALYZE $sql", String::class.java, *args).orEmpty()
     val match = timingPattern.find(tree)
     val totalMs = match?.groupValues?.get(1)?.toDoubleOrNull() ?: -1.0
     val rows = match?.groupValues?.get(2)?.toIntOrNull() ?: -1
-    return AnalyzeResult(tree, totalMs, rows)
+    return MysqlResult(tree, totalMs, rows)
+}
+
+private fun runOpenSearch(client: RestClient, keyword: String): OpenSearchResult {
+    val body = """
+        {
+          "size": 20,
+          "track_total_hits": true,
+          "query": {
+            "multi_match": {
+              "query": ${objectMapper.writeValueAsString(keyword)},
+              "fields": ["title", "author"],
+              "fuzziness": "AUTO"
+            }
+          }
+        }
+    """.trimIndent()
+
+    val request = Request("POST", "/books/_search")
+    request.setEntity(StringEntity(body, ContentType.create("application/json", Charsets.UTF_8)))
+    val response = client.performRequest(request)
+    val root = objectMapper.readTree(EntityUtils.toString(response.entity))
+
+    val took = root.path("took").asLong(0).toDouble()
+    val hits = root.path("hits").path("total").path("value").asLong(0)
+    return OpenSearchResult(took, hits)
 }
