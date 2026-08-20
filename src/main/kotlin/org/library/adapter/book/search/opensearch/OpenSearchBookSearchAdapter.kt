@@ -4,6 +4,7 @@ import org.apache.http.util.EntityUtils
 import org.library.book.application.port.BookDocument
 import org.library.book.application.port.BookSearchPort
 import org.library.bookitem.domain.BookItemRepository
+import org.library.bookitem.domain.countActiveItemsByBookId
 import org.library.core.presentation.PageRequestParams
 import org.opensearch.client.Request
 import org.opensearch.client.RestClient
@@ -58,11 +59,7 @@ class OpenSearchBookSearchAdapter(
         val hitNodes = root.path("hits").path("hits").toList()
 
         val bookIds = hitNodes.map { it.path("_source").path("bookId").asLong() }
-        val bookItemCounts = if (bookIds.isEmpty()) {
-            emptyMap()
-        } else {
-            bookItemRepository.countActiveByBookIdIn(bookIds).associate { it.bookId to it.itemCount }
-        }
+        val bookItemCounts = bookItemRepository.countActiveItemsByBookId(bookIds)
 
         val documents = hitNodes.map { hit ->
             val source = hit.path("_source")

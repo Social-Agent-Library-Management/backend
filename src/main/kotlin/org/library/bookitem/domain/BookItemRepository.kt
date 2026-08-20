@@ -51,3 +51,10 @@ interface BookItemCountProjection {
     val bookId: Long
     val itemCount: Long
 }
+
+fun BookItemRepository.countActiveItemsByBookId(bookIds: List<Long>): Map<Long, Long> =
+    if (bookIds.isEmpty()) {
+        emptyMap()
+    } else {
+        countActiveByBookIdIn(bookIds).associate { it.bookId to it.itemCount }
+    }
