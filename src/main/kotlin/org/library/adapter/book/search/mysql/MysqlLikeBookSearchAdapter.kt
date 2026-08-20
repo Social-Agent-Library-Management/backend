@@ -1,4 +1,4 @@
-package org.library.external.search.rdb
+package org.library.adapter.book.search.mysql
 
 import org.library.book.application.port.BookDocument
 import org.library.book.application.port.BookSearchPort
@@ -14,8 +14,8 @@ import org.springframework.transaction.annotation.Transactional
 
 @Component
 @Transactional(readOnly = true)
-@ConditionalOnProperty(name = ["search.engine"], havingValue = "rdb", matchIfMissing = true)
-class RdbBookSearchAdapter(
+@ConditionalOnProperty(name = ["search.engine"], havingValue = "mysql", matchIfMissing = true)
+class MysqlLikeBookSearchAdapter(
     private val bookRepository: BookRepository,
     private val bookItemRepository: BookItemRepository,
 ) : BookSearchPort {
