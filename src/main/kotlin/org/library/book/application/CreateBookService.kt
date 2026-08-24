@@ -2,6 +2,7 @@ package org.library.book.application
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
+import org.library.book.application.event.BookChangedEvent
 import org.library.book.domain.entity.Book
 import org.library.book.domain.repository.BookRepository
 import org.library.book.domain.error.BookError
@@ -9,12 +10,14 @@ import org.library.book.dto.BookResponse
 import org.library.core.application.Result
 import org.library.core.application.err
 import org.library.core.application.ok
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class CreateBookService(
     private val bookRepository: BookRepository,
+    private val applicationEventPublisher: ApplicationEventPublisher,
 ) {
 
     @Transactional
@@ -26,6 +29,7 @@ class CreateBookService(
         val book = bookRepository.save(
             Book(title = request.title, author = request.author, isbn = isbn, publisher = request.publisher),
         )
+        applicationEventPublisher.publishEvent(BookChangedEvent(book.id))
         return BookResponse.from(book).ok()
     }
 

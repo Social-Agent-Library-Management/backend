@@ -1,11 +1,13 @@
 package org.library.book.application
 
+import org.library.book.application.event.BookChangedEvent
 import org.library.book.domain.repository.BookRepository
 import org.library.book.domain.error.BookError
 import org.library.bookitem.domain.BookItemRepository
 import org.library.core.application.Result
 import org.library.core.application.err
 import org.library.core.application.ok
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 class DeleteBookService(
     private val bookRepository: BookRepository,
     private val bookItemRepository: BookItemRepository,
+    private val applicationEventPublisher: ApplicationEventPublisher,
 ) {
 
     @Transactional
@@ -21,6 +24,7 @@ class DeleteBookService(
             ?: return BookError.NOT_FOUND.err()
         book.softDelete()
         bookItemRepository.findAllByBookIdOrderByCreatedAtAsc(id).forEach { it.softDelete() }
+        applicationEventPublisher.publishEvent(BookChangedEvent(book.id))
         return Unit.ok()
     }
 }
