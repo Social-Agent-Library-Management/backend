@@ -1,4 +1,4 @@
-package org.library.adapter.book.search.opensearch
+package org.library.book.adapter
 
 import org.apache.http.util.EntityUtils
 import org.library.book.application.port.BookDocument
@@ -6,6 +6,7 @@ import org.library.book.application.port.BookSearchPort
 import org.library.bookitem.domain.BookItemRepository
 import org.library.bookitem.domain.countActiveItemsByBookId
 import org.library.core.presentation.PageRequestParams
+import org.library.external.opensearch.index.BookIndex
 import org.opensearch.client.Request
 import org.opensearch.client.RestClient
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -50,7 +51,7 @@ class OpenSearchBookSearchAdapter(
             }
         """.trimIndent()
 
-        val request = Request("POST", "/books/_search")
+        val request = Request("POST", BookIndex.SEARCH_PATH)
         request.setJsonEntity(requestBody)
         val response = restClient.performRequest(request)
         val root = objectMapper.readTree(EntityUtils.toString(response.entity))

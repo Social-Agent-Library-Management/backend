@@ -1,4 +1,4 @@
-package org.library.core.config
+package org.library.external.opensearch.config
 
 import org.apache.http.HttpHost
 import org.opensearch.client.RestClient
