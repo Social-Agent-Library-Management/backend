@@ -1,6 +1,6 @@
 package org.library.book.application.port
 
-import org.library.book.domain.Book
+import org.library.book.domain.entity.Book
 
 data class BookDocument(
     val id: Long,

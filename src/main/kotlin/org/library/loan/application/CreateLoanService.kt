@@ -3,7 +3,7 @@ package org.library.loan.application
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
-import org.library.book.domain.BookRepository
+import org.library.book.domain.repository.BookRepository
 import org.library.bookitem.domain.BookItemRepository
 import org.library.bookitem.domain.BookItemStatus
 import org.library.core.application.Result

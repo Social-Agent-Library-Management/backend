@@ -2,7 +2,7 @@ package org.library.bookitem.application
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
-import org.library.book.domain.BookRepository
+import org.library.book.domain.repository.BookRepository
 import org.library.bookitem.domain.BookItem
 import org.library.bookitem.domain.BookItemRepository
 import org.library.bookitem.domain.BookItemStatus

@@ -1,7 +1,7 @@
 package org.library.book.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
-import org.library.book.domain.Book
+import org.library.book.domain.entity.Book
 import java.time.LocalDateTime
 
 @Schema(description = "도서 응답")

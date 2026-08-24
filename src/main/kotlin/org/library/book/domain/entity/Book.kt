@@ -1,4 +1,4 @@
-package org.library.book.domain
+package org.library.book.domain.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

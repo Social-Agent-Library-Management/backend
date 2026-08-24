@@ -2,8 +2,8 @@ package org.library.book.application
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
-import org.library.book.domain.Book
-import org.library.book.domain.BookRepository
+import org.library.book.domain.entity.Book
+import org.library.book.domain.repository.BookRepository
 import org.library.book.domain.error.BookError
 import org.library.book.dto.BookResponse
 import org.library.core.application.Result

@@ -1,6 +1,6 @@
 package org.library.book.application
 
-import org.library.book.domain.BookRepository
+import org.library.book.domain.repository.BookRepository
 import org.library.book.domain.error.BookError
 import org.library.bookitem.domain.BookItemRepository
 import org.library.core.application.Result
