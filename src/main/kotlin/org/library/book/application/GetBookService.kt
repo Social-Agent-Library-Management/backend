@@ -1,8 +1,8 @@
 package org.library.book.application
 
 import io.swagger.v3.oas.annotations.media.Schema
-import org.library.book.domain.Book
-import org.library.book.domain.BookRepository
+import org.library.book.domain.entity.Book
+import org.library.book.domain.repository.BookRepository
 import org.library.book.domain.error.BookError
 import org.library.bookitem.domain.BookItem
 import org.library.bookitem.domain.BookItemRepository

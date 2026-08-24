@@ -3,7 +3,7 @@ package org.library.book.adapter
 import org.library.book.application.port.BookDocument
 import org.library.book.application.port.BookSearchPort
 import org.library.book.application.port.toBookDocument
-import org.library.book.domain.BookRepository
+import org.library.book.domain.repository.BookRepository
 import org.library.bookitem.domain.BookItemRepository
 import org.library.bookitem.domain.countActiveItemsByBookId
 import org.library.core.presentation.PageRequestParams

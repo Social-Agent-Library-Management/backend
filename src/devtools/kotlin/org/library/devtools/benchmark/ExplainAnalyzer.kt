@@ -3,7 +3,7 @@ package org.library.devtools.benchmark
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
 import org.apache.http.util.EntityUtils
-import org.library.book.domain.BookRepository.Companion.FULLTEXT_MIN_SCORE
+import org.library.book.domain.repository.BookRepository.Companion.FULLTEXT_MIN_SCORE
 import org.library.devtools.db.MysqlConfig
 import org.library.devtools.db.OpenSearchConfig
 import org.opensearch.client.Request

@@ -5,25 +5,17 @@ import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
 import org.apache.http.util.EntityUtils
 import org.library.external.opensearch.index.BookIndex
+import org.library.external.opensearch.dto.BookIndexDocument
+import org.library.external.opensearch.dto.toSourceMap
 import org.library.devtools.db.MysqlConfig
 import org.library.devtools.db.OpenSearchConfig
 import org.opensearch.client.Request
 import org.opensearch.client.RestClient
 import org.springframework.core.io.ClassPathResource
 import tools.jackson.databind.json.JsonMapper
-import java.time.LocalDateTime
 
 private val log = KotlinLogging.logger {}
 private val objectMapper = JsonMapper.builder().build()
-
-private data class BookIndexRow(
-    val id: Long,
-    val title: String,
-    val author: String,
-    val publisher: String,
-    val isbn: String?,
-    val createdAt: LocalDateTime,
-)
 
 fun main() {
     OpenSearchConfig.newClient().use { client ->
@@ -50,38 +42,32 @@ private fun recreateIndex(client: RestClient) {
     log.info { "'${BookIndex.NAME}' 인덱스를 nori 매핑으로 재생성했습니다." }
 }
 
-private fun readBooksFromMysql(): List<BookIndexRow> =
+private fun readBooksFromMysql(): List<BookIndexDocument> =
     MysqlConfig.jdbcTemplate.query(
         "SELECT id, title, author, publisher, isbn, created_at FROM book WHERE deleted_at IS NULL",
     ) { rs, _ ->
-        BookIndexRow(
-            id = rs.getLong("id"),
+        BookIndexDocument(
+            bookId = rs.getLong("id"),
             title = rs.getString("title"),
             author = rs.getString("author"),
             publisher = rs.getString("publisher"),
             isbn = rs.getString("isbn"),
             createdAt = rs.getTimestamp("created_at").toLocalDateTime(),
+            version = 0L,
         )
     }
 
-private fun bulkIndex(client: RestClient, books: List<BookIndexRow>) {
+private fun bulkIndex(client: RestClient, books: List<BookIndexDocument>) {
     books.chunked(1000).forEachIndexed { chunkIndex, chunk ->
         val body = buildString {
             chunk.forEach { book ->
-                append(objectMapper.writeValueAsString(mapOf("index" to mapOf("_index" to BookIndex.NAME, "_id" to book.id))))
-                append('\n')
                 append(
                     objectMapper.writeValueAsString(
-                        mapOf(
-                            "bookId" to book.id,
-                            "title" to book.title,
-                            "author" to book.author,
-                            "publisher" to book.publisher,
-                            "isbn" to book.isbn,
-                            "createdAt" to book.createdAt.toString(),
-                        ),
+                        mapOf("index" to mapOf("_index" to BookIndex.NAME, "_id" to book.bookId)),
                     ),
                 )
+                append('\n')
+                append(objectMapper.writeValueAsString(book.toSourceMap()))
                 append('\n')
             }
         }
