@@ -1,4 +1,4 @@
-package org.library.adapter.book.search.mysql
+package org.library.book.adapter
 
 import org.library.book.application.port.BookDocument
 import org.library.book.application.port.BookSearchPort

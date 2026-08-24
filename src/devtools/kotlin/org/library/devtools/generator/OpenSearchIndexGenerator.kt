@@ -4,12 +4,13 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
 import org.apache.http.util.EntityUtils
+import org.library.external.opensearch.index.BookIndex
 import org.library.devtools.db.MysqlConfig
 import org.library.devtools.db.OpenSearchConfig
 import org.opensearch.client.Request
 import org.opensearch.client.RestClient
+import org.springframework.core.io.ClassPathResource
 import tools.jackson.databind.json.JsonMapper
-import java.io.File
 import java.time.LocalDateTime
 
 private val log = KotlinLogging.logger {}
@@ -32,19 +33,21 @@ fun main() {
         log.info { "MySQL에서 book ${books.size}건 조회 완료" }
 
         bulkIndex(client, books)
-        client.performRequest(Request("POST", "/books/_refresh"))
-        log.info { "OpenSearch 'books' 인덱스에 ${books.size}건 색인 완료" }
+        client.performRequest(Request("POST", BookIndex.REFRESH_PATH))
+        log.info { "OpenSearch '${BookIndex.NAME}' 인덱스에 ${books.size}건 색인 완료" }
     }
 }
 
 private fun recreateIndex(client: RestClient) {
-    runCatching { client.performRequest(Request("DELETE", "/books")) }
+    runCatching { client.performRequest(Request("DELETE", BookIndex.INDEX_PATH)) }
         .onFailure { log.info { "기존 인덱스 없음(정상): ${it.message}" } }
 
-    val create = Request("PUT", "/books")
-    create.setJsonEntity(File("opensearch/books_index.json").readText())
+    val create = Request("PUT", BookIndex.INDEX_PATH)
+    create.setJsonEntity(
+        ClassPathResource(BookIndex.MAPPING_RESOURCE).inputStream.bufferedReader().use { it.readText() },
+    )
     client.performRequest(create)
-    log.info { "'books' 인덱스를 nori 매핑으로 재생성했습니다." }
+    log.info { "'${BookIndex.NAME}' 인덱스를 nori 매핑으로 재생성했습니다." }
 }
 
 private fun readBooksFromMysql(): List<BookIndexRow> =
@@ -65,7 +68,7 @@ private fun bulkIndex(client: RestClient, books: List<BookIndexRow>) {
     books.chunked(1000).forEachIndexed { chunkIndex, chunk ->
         val body = buildString {
             chunk.forEach { book ->
-                append(objectMapper.writeValueAsString(mapOf("index" to mapOf("_index" to "books", "_id" to book.id))))
+                append(objectMapper.writeValueAsString(mapOf("index" to mapOf("_index" to BookIndex.NAME, "_id" to book.id))))
                 append('\n')
                 append(
                     objectMapper.writeValueAsString(
