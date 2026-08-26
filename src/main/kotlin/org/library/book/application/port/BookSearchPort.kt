@@ -5,5 +5,10 @@ import org.springframework.data.domain.Page
 
 interface BookSearchPort {
 
-    fun search(query: String?, page: PageRequestParams): Page<BookDocument>
+    fun search(query: String?, page: PageRequestParams): BookSearchResult
 }
+
+data class BookSearchResult(
+    val page: Page<BookDocument>,
+    val suggestion: String?,
+)

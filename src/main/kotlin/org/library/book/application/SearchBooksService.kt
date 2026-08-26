@@ -13,10 +13,11 @@ class SearchBooksService(
 ) {
 
     fun execute(query: String?, params: PageRequestParams): Response {
-        val page = bookSearchPort.search(query, params)
+        val result = bookSearchPort.search(query, params)
         return Response(
-            books = page.content,
-            pagination = Pagination.from(page),
+            books = result.page.content,
+            pagination = Pagination.from(result.page),
+            suggestion = result.suggestion.takeIf { result.page.totalElements == 0L },
         )
     }
 
@@ -24,5 +25,7 @@ class SearchBooksService(
     data class Response(
         val books: List<BookDocument>,
         val pagination: Pagination,
+        @Schema(description = "검색 결과가 0건일 때, 오타 교정 제안어(없으면 null)")
+        val suggestion: String?,
     )
 }
