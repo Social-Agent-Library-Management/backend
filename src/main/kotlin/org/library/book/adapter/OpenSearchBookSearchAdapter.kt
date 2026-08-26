@@ -3,6 +3,7 @@ package org.library.book.adapter
 import org.apache.http.util.EntityUtils
 import org.library.book.application.port.BookDocument
 import org.library.book.application.port.BookSearchPort
+import org.library.book.application.port.BookSearchResult
 import org.library.bookitem.domain.BookItemRepository
 import org.library.bookitem.domain.countActiveItemsByBookId
 import org.library.core.presentation.PageRequestParams
@@ -10,9 +11,9 @@ import org.library.external.opensearch.index.BookIndex
 import org.opensearch.client.Request
 import org.opensearch.client.RestClient
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.stereotype.Component
+import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 
 @Component
@@ -23,7 +24,7 @@ class OpenSearchBookSearchAdapter(
     private val objectMapper: ObjectMapper,
 ) : BookSearchPort {
 
-    override fun search(query: String?, page: PageRequestParams): Page<BookDocument> {
+    override fun search(query: String?, page: PageRequestParams): BookSearchResult {
         val pageRequest = page.toPageRequest()
         val keyword = query?.trim()?.takeIf { it.isNotBlank() }
 
@@ -41,8 +42,34 @@ class OpenSearchBookSearchAdapter(
             """.trimIndent()
         }
 
+        val suggestField = keyword?.let {
+            """
+              "suggest": {
+                "${BookIndex.TITLE_SUGGEST_NAME}": {
+                  "text": ${objectMapper.writeValueAsString(it)},
+                  "phrase": {
+                    "field": "${BookIndex.TITLE_TRIGRAM_FIELD}",
+                    "gram_size": ${BookIndex.TITLE_SUGGEST_GRAM_SIZE},
+                    "confidence": 1.0,
+                    "max_errors": 2,
+                    "direct_generator": [
+                      {
+                        "field": "${BookIndex.TITLE_SUGGEST_FIELD}",
+                        "suggest_mode": "always",
+                        "min_word_length": 1,
+                        "prefix_length": 1,
+                        "max_edits": 2
+                      }
+                    ]
+                  }
+                }
+              },
+            """.trimIndent()
+        }.orEmpty()
+
         val requestBody = """
             {
+              $suggestField
               "from": ${pageRequest.offset},
               "size": ${pageRequest.pageSize},
               "track_total_hits": true,
@@ -75,6 +102,14 @@ class OpenSearchBookSearchAdapter(
             )
         }
 
-        return PageImpl(documents, pageRequest, totalHits)
+        return BookSearchResult(
+            page = PageImpl(documents, pageRequest, totalHits),
+            suggestion = extractSuggestion(root),
+        )
     }
+
+    private fun extractSuggestion(root: JsonNode): String? =
+        root.path("suggest").path(BookIndex.TITLE_SUGGEST_NAME).path(0).path("options").path(0).path("text")
+            .asString("")
+            .takeIf { it.isNotBlank() }
 }
