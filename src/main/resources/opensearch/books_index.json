@@ -4,11 +4,28 @@
       "tokenizer": {
         "nori_mixed": { "type": "nori_tokenizer", "decompound_mode": "mixed" }
       },
+      "filter": {
+        "title_shingle": {
+          "type": "shingle",
+          "min_shingle_size": 2,
+          "max_shingle_size": 3
+        }
+      },
       "analyzer": {
         "korean_nori": {
           "type": "custom",
           "tokenizer": "nori_mixed",
           "filter": ["nori_readingform", "lowercase"]
+        },
+        "plain_word": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase"]
+        },
+        "plain_trigram": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "title_shingle"]
         }
       }
     }
@@ -16,7 +33,14 @@
   "mappings": {
     "properties": {
       "bookId": { "type": "long" },
-      "title": { "type": "text", "analyzer": "korean_nori" },
+      "title": {
+        "type": "text",
+        "analyzer": "korean_nori",
+        "fields": {
+          "suggest": { "type": "text", "analyzer": "plain_word" },
+          "trigram": { "type": "text", "analyzer": "plain_trigram" }
+        }
+      },
       "author": { "type": "text", "analyzer": "korean_nori" },
       "publisher": { "type": "keyword" },
       "isbn": { "type": "keyword" },
