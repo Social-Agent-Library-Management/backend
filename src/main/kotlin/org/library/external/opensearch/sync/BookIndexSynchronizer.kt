@@ -10,6 +10,7 @@ import org.library.external.opensearch.dto.toEpochMillis
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 
 private val log = KotlinLogging.logger {}
 
@@ -24,8 +25,9 @@ class BookIndexSynchronizer(
 ) {
 
 
+    @Transactional
     fun sync(bookId: Long) {
-        val outboxRows = bookOpenSearchOutboxRepository.findAllByBookId(bookId)
+        val outboxRows = bookOpenSearchOutboxRepository.findAllByBookIdForUpdate(bookId)
         if (outboxRows.isEmpty()) return
         val outboxIds = outboxRows.map { it.id }
 
