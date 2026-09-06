@@ -54,7 +54,8 @@ class LoanController(
 
     @Operation(
         summary = "반납 처리",
-        description = "대출 건을 반납 처리한다. 실제 반납일을 지정하지 않으면 오늘 날짜로 기록되며, 소장본 상태가 AVAILABLE로 돌아간다.",
+        description = "대출 건을 반납 처리한다. 실제 반납일을 지정하지 않으면 오늘 날짜로 기록되며, 소장본 상태가 AVAILABLE로 돌아간다. " +
+            "반납과 동시에 대출자 이름·이메일은 개인정보 보호를 위해 삭제된다.",
     )
     @ApiErrorCode(errorCodes = [LoanError::class], only = ["LOAN_NOT_FOUND", "LOAN_NOT_ON_LOAN"])
     @PostMapping("/{loanId}/return")
@@ -68,12 +69,13 @@ class LoanController(
         summary = "대출 내역 검색·목록",
         description = "도서명·대출자 이름·부서·상태로 대출 내역을 검색한다. 기본 정렬은 대여일 내림차순. " +
             "상태는 ON_LOAN(대출중 전체, 연체 포함)·OVERDUE(대출중이며 연체인 건만)·RETURNED(반납완료)이며, " +
-            "OVERDUE는 ON_LOAN의 부분집합이다.",
+            "OVERDUE는 ON_LOAN의 부분집합이다. " +
+            "반납 완료 건은 대출자 이름이 파기되어 borrowerName 검색 대상에서 제외되고 응답에도 null로 내려간다.",
     )
     @GetMapping
     fun search(
         @Parameter(description = "도서명 부분 일치") @RequestParam(required = false) bookTitle: String?,
-        @Parameter(description = "대출자 이름 부분 일치") @RequestParam(required = false) borrowerName: String?,
+        @Parameter(description = "대출자 이름 부분 일치 (반납 완료 건은 이름이 파기되어 검색되지 않음)") @RequestParam(required = false) borrowerName: String?,
         @Parameter(description = "부서명 부분 일치") @RequestParam(required = false) department: String?,
         @Parameter(description = "대출 상태 (ON_LOAN/OVERDUE/RETURNED)") @RequestParam(required = false) status: SearchLoansService.LoanSearchStatus?,
         @ParameterObject params: PageRequestParams,

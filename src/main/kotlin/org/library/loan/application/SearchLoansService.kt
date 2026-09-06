@@ -56,8 +56,8 @@ class SearchLoansService(
         val managementNumber: String,
         @field:Schema(description = "도서명", example = "클린 코드")
         val bookTitle: String,
-        @field:Schema(description = "대출자 이름", example = "홍길동")
-        val borrowerName: String,
+        @field:Schema(description = "대출자 이름 (반납 완료 건은 개인정보 파기로 null)", example = "홍길동", nullable = true)
+        val borrowerName: String?,
         @field:Schema(description = "부서명", example = "총무과")
         val department: String,
         @field:Schema(description = "대여일", example = "2026-07-31")

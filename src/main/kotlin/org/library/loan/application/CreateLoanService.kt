@@ -99,7 +99,8 @@ class CreateLoanService(
                 bookItemId = loan.bookItemId,
                 managementNumber = loan.managementNumber,
                 bookTitle = loan.bookTitle,
-                borrowerName = loan.borrowerName,
+                borrowerName = loan.borrowerName
+                    ?: error("Loan(${loan.id})에 대출자 이름이 없습니다."),
                 department = loan.department,
                 borrowerEmail = loan.borrowerEmail,
                 loanDate = loan.loanDate,
