@@ -33,8 +33,8 @@ class Loan(
     var bookTitle: String = bookTitle
         protected set
 
-    @Column(nullable = false)
-    var borrowerName: String = borrowerName
+    @Column
+    var borrowerName: String? = borrowerName
         protected set
 
     @Column(nullable = false)
@@ -71,6 +71,8 @@ class Loan(
         require(status == LoanStatus.ON_LOAN) { "이미 반납된 대출 건입니다." }
         this.returnedAt = returnedAt
         this.status = LoanStatus.RETURNED
+        this.borrowerName = null
+        this.borrowerEmail = null
     }
 
     fun isOverdue(today: LocalDate): Boolean = status == LoanStatus.ON_LOAN && dueDate < today
