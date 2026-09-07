@@ -15,6 +15,8 @@ interface BookRepository : JpaRepository<Book, Long> {
 
     fun findAllByDeletedAtIsNull(pageable: Pageable): Page<Book>
 
+    fun countByDeletedAtIsNull(): Long
+
     @Query(
         """
         select b from Book b

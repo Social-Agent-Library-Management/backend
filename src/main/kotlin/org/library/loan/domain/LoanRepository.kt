@@ -15,6 +15,11 @@ interface LoanRepository : JpaRepository<Loan, Long> {
     @Query("select l from Loan l where l.id = :id")
     fun findByIdForUpdate(@Param("id") id: Long): Loan?
 
+    fun countByStatus(status: LoanStatus): Long
+
+    @Query("select count(l) from Loan l where l.status = :status and l.dueDate < :today")
+    fun countOverdue(@Param("status") status: LoanStatus, @Param("today") today: LocalDate): Long
+
     @Query(
         """
         select l from Loan l
