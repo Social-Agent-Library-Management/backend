@@ -14,6 +14,10 @@ interface BookItemRepository : JpaRepository<BookItem, Long> {
 
     fun findAllByBookIdOrderByCreatedAtAsc(bookId: Long): List<BookItem>
 
+    fun countByDeletedAtIsNull(): Long
+
+    fun countByDeletedAtIsNullAndStatus(status: BookItemStatus): Long
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select bi from BookItem bi where bi.managementNumber = :managementNumber and bi.deletedAt is null")
     fun findByManagementNumberForUpdate(@Param("managementNumber") managementNumber: String): BookItem?
