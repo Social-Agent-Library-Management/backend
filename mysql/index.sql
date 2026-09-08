@@ -3,8 +3,9 @@
 CREATE UNIQUE INDEX ux_book_active_isbn
     ON book ((IF(deleted_at IS NULL, isbn, NULL)));
 
-# 사용처 : CreateBookItemService.execute
+# 사용처 : CreateBookItemService.execute, ImportExcelService.processRows
 # 관리번호는 전체 고유해야 한다. (check-then-act의 동시 요청 레이스 컨디션을 DB 유니크 제약으로 방어)
+# 엑셀 일괄 등록은 이 인덱스로 관리번호 존재 여부를 배치 조회 1번에 확인한다(행마다 개별 조회 시 N+1).
 CREATE UNIQUE INDEX ux_book_item_management_number
     ON book_item (management_number);
 

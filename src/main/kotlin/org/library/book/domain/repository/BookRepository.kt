@@ -63,7 +63,17 @@ interface BookRepository : JpaRepository<Book, Long> {
     )
     fun searchFullText(@Param("q") q: String, pageable: Pageable): Page<Book>
 
+    @Query("select b.id as id, b.title as title, b.publisher as publisher, b.author as author from Book b where b.deletedAt is null")
+    fun findAllActiveIdentityProjection(): List<BookIdentityProjection>
+
     companion object {
         const val FULLTEXT_MIN_SCORE = 0.0001
     }
+}
+
+interface BookIdentityProjection {
+    val id: Long
+    val title: String
+    val publisher: String
+    val author: String
 }

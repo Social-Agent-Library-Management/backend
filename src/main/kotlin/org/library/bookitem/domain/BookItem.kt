@@ -52,6 +52,6 @@ class BookItem(
 
     companion object {
 
-        val MANAGEMENT_NUMBER_REGEX = Regex("^[^-\\s]+-\\d+$")
+        val MANAGEMENT_NUMBER_REGEX = Regex("^[^-\\s]+-\\d+(\\([^\\s()-]+\\))?$")
     }
 }
