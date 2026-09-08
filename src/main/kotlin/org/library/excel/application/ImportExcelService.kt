@@ -12,7 +12,7 @@ import org.library.core.application.err
 import org.library.core.application.ok
 import org.library.excel.domain.ExcelImportRowCode
 import org.library.excel.domain.ExcelImportRowJudgement
-import org.library.excel.domain.error.ExcelImportError
+import org.library.excel.domain.error.ExcelError
 import org.library.excel.domain.error.ExcelImportRejectedException
 import org.library.excel.dto.ExcelImportRowResult
 import org.library.excel.mapping.ExcelColumnMapper
@@ -37,21 +37,21 @@ class ImportExcelService(
 ) {
 
     @Transactional
-    fun execute(file: MultipartFile): Result<Response, ExcelImportError> {
+    fun execute(file: MultipartFile): Result<Response, ExcelError> {
         val fileName = file.originalFilename?.takeIf { it.isNotBlank() } ?: file.name
-        if (!ExcelWorkbookReader.isSupportedFileType(fileName)) return ExcelImportError.INVALID_FILE_TYPE.err()
-        if (file.size > maxFileSizeBytes) return ExcelImportError.FILE_TOO_LARGE.err()
+        if (!ExcelWorkbookReader.isSupportedFileType(fileName)) return ExcelError.INVALID_FILE_TYPE.err()
+        if (file.size > maxFileSizeBytes) return ExcelError.FILE_TOO_LARGE.err()
 
-        val bytes = runCatching { file.bytes }.getOrNull() ?: return ExcelImportError.UNREADABLE_FILE.err()
-        val workbook = runCatching { ExcelWorkbookReader.open(bytes) }.getOrNull() ?: return ExcelImportError.UNREADABLE_FILE.err()
+        val bytes = runCatching { file.bytes }.getOrNull() ?: return ExcelError.UNREADABLE_FILE.err()
+        val workbook = runCatching { ExcelWorkbookReader.open(bytes) }.getOrNull() ?: return ExcelError.UNREADABLE_FILE.err()
 
         return workbook.use {
             val sheetNames = ExcelWorkbookReader.sheetNames(workbook)
-            if (sheetNames.isEmpty()) return ExcelImportError.UNREADABLE_FILE.err()
+            if (sheetNames.isEmpty()) return ExcelError.UNREADABLE_FILE.err()
 
             val firstSheet = workbook.getSheet(sheetNames[0])
             val mappedColumns = ExcelColumnMapper.detect(ExcelWorkbookReader.headerRow(firstSheet))
-                ?: return ExcelImportError.REQUIRED_COLUMN_NOT_FOUND.err()
+                ?: return ExcelError.REQUIRED_COLUMN_NOT_FOUND.err()
 
             processRows(workbook, sheetNames, mappedColumns).ok()
         }

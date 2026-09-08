@@ -17,6 +17,8 @@ interface BookRepository : JpaRepository<Book, Long> {
 
     fun countByDeletedAtIsNull(): Long
 
+    fun findAllByDeletedAtIsNullOrderByIdAsc(): List<Book>
+
     @Query(
         """
         select b from Book b

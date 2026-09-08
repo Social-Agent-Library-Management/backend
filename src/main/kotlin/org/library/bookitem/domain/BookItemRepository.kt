@@ -18,6 +18,10 @@ interface BookItemRepository : JpaRepository<BookItem, Long> {
 
     fun countByDeletedAtIsNullAndStatus(status: BookItemStatus): Long
 
+    fun findAllByDeletedAtIsNullOrderByIdAsc(): List<BookItem>
+
+    fun findAllByDeletedAtIsNullAndStatusNotInOrderByIdAsc(statuses: Collection<BookItemStatus>): List<BookItem>
+
     @Query("select bi.managementNumber from BookItem bi where bi.managementNumber in :managementNumbers and bi.deletedAt is null")
     fun findExistingManagementNumbers(@Param("managementNumbers") managementNumbers: Collection<String>): List<String>
 
