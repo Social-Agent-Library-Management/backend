@@ -54,4 +54,19 @@ interface LoanRepository : JpaRepository<Loan, Long> {
         @Param("department") department: String?,
         pageable: Pageable,
     ): Page<Loan>
+
+    @Query(
+        """
+        select l from Loan l
+        where (:from is null or l.loanDate >= :from)
+          and (:to is null or l.loanDate <= :to)
+          and (:unreturnedOnly = false or l.status = org.library.loan.domain.LoanStatus.ON_LOAN)
+        order by l.id asc
+        """,
+    )
+    fun findAllForExport(
+        @Param("from") from: LocalDate?,
+        @Param("to") to: LocalDate?,
+        @Param("unreturnedOnly") unreturnedOnly: Boolean,
+    ): List<Loan>
 }

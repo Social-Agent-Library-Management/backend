@@ -3,7 +3,7 @@ package org.library.excel.domain.error
 import org.library.core.exception.ErrorCode
 import org.springframework.http.HttpStatus
 
-enum class ExcelImportError(
+enum class ExcelError(
     override val status: HttpStatus,
     override val message: String,
 ) : ErrorCode {
@@ -12,6 +12,8 @@ enum class ExcelImportError(
     REQUIRED_COLUMN_NOT_FOUND(HttpStatus.BAD_REQUEST, "도서번호·도서명 머리글을 찾지 못했습니다."),
     FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "파일 크기가 20MB를 초과했습니다."),
     VALIDATION_ERRORS_REMAIN(HttpStatus.CONFLICT, "오류 행이 있어 등록을 진행할 수 없습니다."),
+    NO_SHEET_SELECTED(HttpStatus.BAD_REQUEST, "선택된 시트가 없습니다."),
+    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "대여일 시작이 종료보다 늦을 수 없습니다."),
     ;
 
     override val code: String get() = name
