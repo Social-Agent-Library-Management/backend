@@ -1,0 +1,18 @@
+package org.library.excel.domain
+
+enum class ExcelImportRowJudgement {
+    OK,
+    WARN,
+    ERROR,
+}
+
+enum class ExcelImportRowCode {
+    MANAGEMENT_NUMBER_REQUIRED,
+    TITLE_REQUIRED,
+    MANAGEMENT_NUMBER_INVALID_FORMAT,
+    DUPLICATE_MANAGEMENT_NUMBER_IN_FILE,
+    DUPLICATE_MANAGEMENT_NUMBER_IN_DB,
+    EXISTING_BOOK_ITEM_ADDED,
+    AUTHOR_BLANK,
+    PUBLISHER_BLANK,
+}
