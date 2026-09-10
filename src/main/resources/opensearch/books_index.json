@@ -1,50 +1,115 @@
 {
   "settings": {
     "analysis": {
+      "char_filter": {
+        "hangul_jamo": {
+          "type": "icu_normalizer",
+          "name": "nfc",
+          "mode": "decompose"
+        }
+      },
       "tokenizer": {
-        "nori_mixed": { "type": "nori_tokenizer", "decompound_mode": "mixed" }
+        "char_unigram": {
+          "type": "ngram",
+          "min_gram": 1,
+          "max_gram": 1,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        }
       },
       "filter": {
         "title_shingle": {
           "type": "shingle",
           "min_shingle_size": 2,
           "max_shingle_size": 3
+        },
+        "jamo_glue": {
+          "type": "shingle",
+          "min_shingle_size": 2,
+          "max_shingle_size": 2,
+          "token_separator": "",
+          "output_unigrams": true
         }
       },
       "analyzer": {
-        "korean_nori": {
+        "char_substring": {
           "type": "custom",
-          "tokenizer": "nori_mixed",
-          "filter": ["nori_readingform", "lowercase"]
+          "tokenizer": "char_unigram",
+          "filter": [
+            "lowercase"
+          ]
         },
-        "plain_word": {
+        "jamo_word": {
           "type": "custom",
+          "char_filter": [
+            "hangul_jamo"
+          ],
           "tokenizer": "standard",
-          "filter": ["lowercase"]
+          "filter": [
+            "lowercase",
+            "jamo_glue"
+          ]
         },
-        "plain_trigram": {
+        "jamo_trigram": {
           "type": "custom",
+          "char_filter": [
+            "hangul_jamo"
+          ],
           "tokenizer": "standard",
-          "filter": ["lowercase", "title_shingle"]
+          "filter": [
+            "lowercase",
+            "title_shingle"
+          ]
         }
       }
     }
   },
   "mappings": {
     "properties": {
-      "bookId": { "type": "long" },
+      "bookId": {
+        "type": "long"
+      },
       "title": {
         "type": "text",
-        "analyzer": "korean_nori",
+        "index": false,
         "fields": {
-          "suggest": { "type": "text", "analyzer": "plain_word" },
-          "trigram": { "type": "text", "analyzer": "plain_trigram" }
+          "ngram": {
+            "type": "text",
+            "analyzer": "char_substring"
+          },
+          "jamo": {
+            "type": "text",
+            "analyzer": "jamo_word"
+          },
+          "jamotri": {
+            "type": "text",
+            "analyzer": "jamo_trigram"
+          }
         }
       },
-      "author": { "type": "text", "analyzer": "korean_nori" },
-      "publisher": { "type": "keyword" },
-      "isbn": { "type": "keyword" },
-      "createdAt": { "type": "date" }
+      "author": {
+        "type": "text",
+        "index": false,
+        "fields": {
+          "ngram": {
+            "type": "text",
+            "analyzer": "char_substring"
+          }
+        }
+      },
+      "publisher": {
+        "type": "keyword",
+        "index": false
+      },
+      "isbn": {
+        "type": "keyword",
+        "index": false
+      },
+      "createdAt": {
+        "type": "date"
+      }
     }
   }
 }
