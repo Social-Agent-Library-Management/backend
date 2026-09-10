@@ -13,5 +13,8 @@ object BookIndex {
     const val TITLE_TRIGRAM_FIELD = "title.trigram"
     const val TITLE_SUGGEST_GRAM_SIZE = 3
 
+    const val TITLE_NGRAM_FIELD = "title.ngram"
+    const val AUTHOR_NGRAM_FIELD = "author.ngram"
+
     fun documentPath(bookId: Long): String = "/$NAME/_doc/$bookId"
 }

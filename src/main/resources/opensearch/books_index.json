@@ -2,7 +2,13 @@
   "settings": {
     "analysis": {
       "tokenizer": {
-        "nori_mixed": { "type": "nori_tokenizer", "decompound_mode": "mixed" }
+        "nori_mixed": { "type": "nori_tokenizer", "decompound_mode": "mixed" },
+        "char_unigram": {
+          "type": "ngram",
+          "min_gram": 1,
+          "max_gram": 1,
+          "token_chars": ["letter", "digit"]
+        }
       },
       "filter": {
         "title_shingle": {
@@ -15,7 +21,7 @@
         "korean_nori": {
           "type": "custom",
           "tokenizer": "nori_mixed",
-          "filter": ["nori_readingform", "lowercase"]
+          "filter": ["nori_part_of_speech", "nori_readingform", "lowercase"]
         },
         "plain_word": {
           "type": "custom",
@@ -26,6 +32,11 @@
           "type": "custom",
           "tokenizer": "standard",
           "filter": ["lowercase", "title_shingle"]
+        },
+        "char_substring": {
+          "type": "custom",
+          "tokenizer": "char_unigram",
+          "filter": ["lowercase"]
         }
       }
     }
@@ -38,10 +49,17 @@
         "analyzer": "korean_nori",
         "fields": {
           "suggest": { "type": "text", "analyzer": "plain_word" },
-          "trigram": { "type": "text", "analyzer": "plain_trigram" }
+          "trigram": { "type": "text", "analyzer": "plain_trigram" },
+          "ngram": { "type": "text", "analyzer": "char_substring" }
         }
       },
-      "author": { "type": "text", "analyzer": "korean_nori" },
+      "author": {
+        "type": "text",
+        "analyzer": "plain_word",
+        "fields": {
+          "ngram": { "type": "text", "analyzer": "char_substring" }
+        }
+      },
       "publisher": { "type": "keyword" },
       "isbn": { "type": "keyword" },
       "createdAt": { "type": "date" }
