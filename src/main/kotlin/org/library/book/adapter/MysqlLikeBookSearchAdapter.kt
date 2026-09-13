@@ -21,7 +21,7 @@ class MysqlLikeBookSearchAdapter(
 ) : BookSearchPort {
 
     override fun search(query: String?, page: PageRequestParams): BookSearchResult {
-        val pageRequest = page.toPageRequest(Sort.by(Sort.Direction.DESC, "createdAt"))
+        val pageRequest = page.toPageRequest(Sort.by(Sort.Direction.DESC, "createdAt", "id"))
         val keyword = query?.trim()?.takeIf { it.isNotBlank() }
         val books = if (keyword == null) {
             bookRepository.findAllByDeletedAtIsNull(pageRequest)

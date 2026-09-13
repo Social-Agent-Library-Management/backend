@@ -50,7 +50,7 @@ interface BookRepository : JpaRepository<Book, Long> {
               and match(b.title, b.author) against(:q in natural language mode)
         ) t
         where t.score > $FULLTEXT_MIN_SCORE
-        order by t.created_at desc
+        order by t.created_at desc, t.id desc
         """,
         countQuery = """
         select count(*) from (

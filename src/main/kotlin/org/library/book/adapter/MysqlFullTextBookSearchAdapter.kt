@@ -22,7 +22,7 @@ class MysqlFullTextBookSearchAdapter(
 
     override fun search(query: String?, page: PageRequestParams): BookSearchResult {
         val keyword = query?.trim()?.takeIf { it.isNotBlank() }
-        val pageRequest = page.toPageRequest(Sort.by(Sort.Direction.DESC, "createdAt"))
+        val pageRequest = page.toPageRequest(Sort.by(Sort.Direction.DESC, "createdAt", "id"))
         val books = when {
             keyword == null -> bookRepository.findAllByDeletedAtIsNull(pageRequest)
             keyword.length < 2 -> bookRepository.searchActive(keyword, pageRequest)

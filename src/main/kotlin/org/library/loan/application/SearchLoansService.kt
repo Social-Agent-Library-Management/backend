@@ -24,7 +24,7 @@ class SearchLoansService(
         status: LoanSearchStatus?,
         params: PageRequestParams,
     ): Response {
-        val pageRequest = params.toPageRequest(Sort.by(Sort.Direction.DESC, "loanDate"))
+        val pageRequest = params.toPageRequest(Sort.by(Sort.Direction.DESC, "loanDate", "id"))
         val today = LocalDate.now()
         val page = loanRepository.search(
             bookTitle = bookTitle,

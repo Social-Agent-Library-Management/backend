@@ -20,7 +20,7 @@ class SearchBookItemsService(
 ) {
 
     fun execute(q: String?, managementNumber: String?, params: PageRequestParams): Response {
-        val pageRequest = params.toPageRequest(Sort.by(Sort.Direction.DESC, "createdAt"))
+        val pageRequest = params.toPageRequest(Sort.by(Sort.Direction.DESC, "createdAt", "id"))
         val matchedBookIds = q?.let { bookRepository.findAllByTitleContainingOrAuthorContaining(it).map { book -> book.id } }
         val page = bookItemRepository.search(
             bookIds = matchedBookIds,
