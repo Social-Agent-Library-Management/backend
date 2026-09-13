@@ -74,7 +74,7 @@ class OpenSearchBookSearchAdapter(
               "size": ${pageRequest.pageSize},
               "track_total_hits": true,
               "query": $queryClause,
-              "sort": [ { "createdAt": "desc" } ]
+              "sort": [ { "createdAt": "desc" }, { "bookId": "desc" } ]
             }
         """.trimIndent()
 
