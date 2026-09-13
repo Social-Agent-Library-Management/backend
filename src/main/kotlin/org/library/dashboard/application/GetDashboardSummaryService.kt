@@ -3,7 +3,7 @@ package org.library.dashboard.application
 import io.swagger.v3.oas.annotations.media.Schema
 import org.library.core.presentation.PageRequestParams
 import org.library.loan.application.OverdueLoansService
-import org.library.loan.application.SearchLoansService
+import org.library.loan.application.RecentLoanActivitiesService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -11,20 +11,16 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class GetDashboardSummaryService(
     private val getDashboardCountsService: GetDashboardCountsService,
-    private val searchLoansService: SearchLoansService,
+    private val recentLoanActivitiesService: RecentLoanActivitiesService,
     private val overdueLoansService: OverdueLoansService,
 ) {
 
-    fun execute(recentLoanLimit: Int, overdueLimit: Int): Response {
+    fun execute(recentActivityLimit: Int, overdueLimit: Int): Response {
         val counts = getDashboardCountsService.execute()
 
-        val recentLoans = searchLoansService.execute(
-            bookTitle = null,
-            borrowerName = null,
-            department = null,
-            status = null,
-            params = PageRequestParams(page = 1, pageSize = recentLoanLimit),
-        ).loans
+        val recentActivities = recentLoanActivitiesService.execute(
+            params = PageRequestParams(page = 1, pageSize = recentActivityLimit),
+        )
 
         val overdueLoans = overdueLoansService.execute(
             department = null,
@@ -37,7 +33,7 @@ class GetDashboardSummaryService(
             availableBookItemCount = counts.availableBookItemCount,
             activeLoanCount = counts.activeLoanCount,
             overdueLoanCount = counts.overdueLoanCount,
-            recentLoans = recentLoans,
+            recentActivities = recentActivities,
             overdueLoans = overdueLoans,
         )
     }
@@ -54,8 +50,8 @@ class GetDashboardSummaryService(
         val activeLoanCount: Long,
         @field:Schema(description = "연체 건수", example = "5")
         val overdueLoanCount: Long,
-        @field:Schema(description = "최근 대출 활동 목록 (대여일 내림차순, 캐싱하지 않음)")
-        val recentLoans: List<SearchLoansService.LoanSummary>,
+        @field:Schema(description = "최근 활동 목록 (대출·반납 모두 포함, 활동 시각 내림차순, 캐싱하지 않음)")
+        val recentActivities: List<RecentLoanActivitiesService.LoanActivity>,
         @field:Schema(description = "연체 목록 (경과일 내림차순, 캐싱하지 않음)")
         val overdueLoans: List<OverdueLoansService.OverdueLoanSummary>,
     )
