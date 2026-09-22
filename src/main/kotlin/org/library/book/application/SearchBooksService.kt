@@ -17,7 +17,7 @@ class SearchBooksService(
         return Response(
             books = result.page.content,
             pagination = Pagination.from(result.page),
-            suggestion = result.suggestion.takeIf { result.page.totalElements == 0L },
+            suggestions = result.suggestions,
         )
     }
 
@@ -25,7 +25,10 @@ class SearchBooksService(
     data class Response(
         val books: List<BookDocument>,
         val pagination: Pagination,
-        @Schema(description = "검색 결과가 0건일 때, 오타 교정 제안어(없으면 null)")
-        val suggestion: String?,
+        @Schema(
+            description = "검색 결과가 0건일 때 내려가는 교정 검색어(최대 3건, 없으면 빈 배열). " ,
+            example = "[\"기억\"]",
+        )
+        val suggestions: List<String>,
     )
 }
