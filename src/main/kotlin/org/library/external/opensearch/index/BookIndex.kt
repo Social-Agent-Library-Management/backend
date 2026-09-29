@@ -5,13 +5,19 @@ object BookIndex {
     const val NAME = "books"
     const val MAPPING_RESOURCE = "opensearch/books_index.json"
     const val SEARCH_PATH = "/$NAME/_search"
+    const val MULTI_SEARCH_PATH = "/$NAME/_msearch"
     const val REFRESH_PATH = "/$NAME/_refresh"
     const val INDEX_PATH = "/$NAME"
 
     const val TITLE_SUGGEST_NAME = "title_suggest"
-    const val TITLE_SUGGEST_FIELD = "title.suggest"
-    const val TITLE_TRIGRAM_FIELD = "title.trigram"
+
+    const val TITLE_JAMO_FIELD = "title.jamo"
+
+    const val TITLE_JAMO_TRIGRAM_FIELD = "title.jamo_trigram"
     const val TITLE_SUGGEST_GRAM_SIZE = 3
+
+    const val TITLE_NGRAM_FIELD = "title.ngram"
+    const val AUTHOR_NGRAM_FIELD = "author.ngram"
 
     fun documentPath(bookId: Long): String = "/$NAME/_doc/$bookId"
 }

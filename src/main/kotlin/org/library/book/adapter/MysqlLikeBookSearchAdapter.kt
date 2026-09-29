@@ -33,7 +33,7 @@ class MysqlLikeBookSearchAdapter(
 
         return BookSearchResult(
             page = books.map { it.toBookDocument(bookItemCounts[it.id] ?: 0L) },
-            suggestion = null,
+            suggestions = emptyList(),
         )
     }
 }
