@@ -35,12 +35,13 @@ private fun recreateIndex(client: RestClient) {
         .onFailure { log.info { "기존 인덱스 없음(정상): ${it.message}" } }
 
     val create = Request("PUT", BookIndex.INDEX_PATH)
-    create.setJsonEntity(
-        ClassPathResource(BookIndex.MAPPING_RESOURCE).inputStream.bufferedReader().use { it.readText() },
-    )
+    create.setJsonEntity(indexMappingJson())
     client.performRequest(create)
-    log.info { "'${BookIndex.NAME}' 인덱스를 nori 매핑으로 재생성했습니다." }
+    log.info { "'${BookIndex.NAME}' 인덱스를 재생성했습니다." }
 }
+
+private fun indexMappingJson(): String =
+    ClassPathResource(BookIndex.MAPPING_RESOURCE).inputStream.bufferedReader().use { it.readText() }
 
 private fun readBooksFromMysql(): List<BookIndexDocument> =
     MysqlConfig.jdbcTemplate.query(
