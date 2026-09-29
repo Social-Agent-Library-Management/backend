@@ -20,21 +20,21 @@
         }
       },
       "filter": {
-        "jamo_glue": {
+        "unspaced_shingle": {
           "type": "shingle",
           "min_shingle_size": 2,
           "max_shingle_size": 2,
           "token_separator": "",
           "output_unigrams": true
         },
-        "title_shingle": {
+        "spaced_shingle": {
           "type": "shingle",
           "min_shingle_size": 2,
           "max_shingle_size": 3
         }
       },
       "analyzer": {
-        "char_substring": {
+        "char_ngram": {
           "type": "custom",
           "tokenizer": "char_unigram",
           "filter": [
@@ -49,7 +49,7 @@
           "tokenizer": "standard",
           "filter": [
             "lowercase",
-            "jamo_glue"
+            "unspaced_shingle"
           ]
         },
         "jamo_trigram": {
@@ -60,7 +60,7 @@
           "tokenizer": "standard",
           "filter": [
             "lowercase",
-            "title_shingle"
+            "spaced_shingle"
           ]
         }
       }
@@ -77,13 +77,13 @@
         "fields": {
           "ngram": {
             "type": "text",
-            "analyzer": "char_substring"
+            "analyzer": "char_ngram"
           },
           "jamo": {
             "type": "text",
             "analyzer": "jamo_word"
           },
-          "jamotri": {
+          "jamo_trigram": {
             "type": "text",
             "analyzer": "jamo_trigram"
           }
@@ -95,7 +95,7 @@
         "fields": {
           "ngram": {
             "type": "text",
-            "analyzer": "char_substring"
+            "analyzer": "char_ngram"
           }
         }
       },

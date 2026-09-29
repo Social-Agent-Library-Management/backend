@@ -16,7 +16,6 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.stereotype.Component
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
-import kotlin.math.abs
 
 @Component
 @ConditionalOnProperty(name = ["search.engine"], havingValue = "opensearch")
@@ -92,7 +91,7 @@ class OpenSearchBookSearchAdapter(
             )
         }
 
-        val suggestions = if (keyword == null || totalHits > 0L) emptyList() else suggestionsFor(keyword, root)
+        val suggestions = if (keyword == null || totalHits > 0L) emptyList() else assembleSuggestions(keyword, root)
 
         return BookSearchResult(
             page = PageImpl(documents, pageRequest, totalHits),
@@ -100,26 +99,26 @@ class OpenSearchBookSearchAdapter(
         )
     }
 
-    private fun suggestionsFor(keyword: String, root: JsonNode): List<String> {
-        val length = flatten(keyword).length
-        val corrected = bestSuggestions(extractSuggestions(root, HangulJamo.decompose(keyword), keyword), keyword)
+    private fun assembleSuggestions(keyword: String, root: JsonNode): List<String> {
+        val length = asNgramText(keyword).length
+        val corrected = retryUnspaced(selectJamoCandidates(root, HangulJamo.decompose(keyword), keyword), keyword)
             .take(SUGGESTION_SIZE)
             .mapNotNull { candidate ->
-                resolveToRealTitle(candidate.text)?.let { sliceAt(it, candidate.text, length) }
+                findContainingTitle(candidate.text)?.let { toSearchWord(it, candidate.text, length) }
             }
             .filter { it.isNotBlank() }
             .distinct()
 
         return corrected.ifEmpty {
-            looseCandidates(keyword)
-                .map { sliceAt(it, null, length) }
+            unorderedNgramCandidates(keyword)
+                .map { toSearchWord(it, null, length) }
                 .filter { it.isNotBlank() }
                 .distinct()
                 .take(SUGGESTION_SIZE)
         }
     }
 
-    private fun sliceAt(title: String, anchor: String?, length: Int): String {
+    private fun toSearchWord(title: String, anchor: String?, length: Int): String {
         val positions = ArrayList<Int>(title.length)
         val flat = buildString {
             title.forEachIndexed { at, char ->
@@ -131,7 +130,7 @@ class OpenSearchBookSearchAdapter(
         }
         if (positions.isEmpty() || length <= 0) return title
 
-        val start = anchor?.let { flat.indexOf(flatten(it)) }?.takeIf { it >= 0 } ?: 0
+        val start = anchor?.let { flat.indexOf(asNgramText(it)) }?.takeIf { it >= 0 } ?: 0
         val last = start + length - 1
         return if (last >= positions.size) {
             title.substring(positions[start])
@@ -140,11 +139,11 @@ class OpenSearchBookSearchAdapter(
         }
     }
 
-    private fun flatten(text: String): String =
+    private fun asNgramText(text: String): String =
         text.filter { it.isLetterOrDigit() }.lowercase()
 
-    private fun looseCandidates(keyword: String): List<String> {
-        if (keyword.length < NGRAM_LOOSE_MIN_LENGTH) return emptyList()
+    private fun unorderedNgramCandidates(keyword: String): List<String> {
+        if (keyword.length < UNORDERED_NGRAM_MIN_LENGTH) return emptyList()
 
         val request = Request("POST", BookIndex.SEARCH_PATH)
         request.setJsonEntity(
@@ -156,7 +155,7 @@ class OpenSearchBookSearchAdapter(
                 "match": {
                   "${BookIndex.TITLE_NGRAM_FIELD}": {
                     "query": ${objectMapper.writeValueAsString(keyword)},
-                    "minimum_should_match": "$NGRAM_MIN_SHOULD_MATCH"
+                    "minimum_should_match": "$UNORDERED_NGRAM_MIN_SHOULD_MATCH"
                   }
                 }
               }
@@ -169,32 +168,30 @@ class OpenSearchBookSearchAdapter(
             .mapNotNull { it.path("_source").path("title").asString("").takeIf { title -> title.isNotBlank() } }
     }
 
-    private fun resolveToRealTitle(suggestion: String): String? {
+    private fun findContainingTitle(candidate: String): String? {
         val request = Request("POST", BookIndex.SEARCH_PATH)
         request.setJsonEntity(
             """
             {
-              "size": $RESOLVE_CANDIDATES,
+              "size": 1,
               "_source": ["title"],
-              "query": { "match_phrase": { "${BookIndex.TITLE_NGRAM_FIELD}": ${objectMapper.writeValueAsString(suggestion)} } }
+              "query": { "match_phrase": { "${BookIndex.TITLE_NGRAM_FIELD}": ${objectMapper.writeValueAsString(candidate)} } }
             }
             """.trimIndent(),
         )
         val response = restClient.performRequest(request)
         val root = objectMapper.readTree(EntityUtils.toString(response.entity))
-        return root.path("hits").path("hits")
-            .mapNotNull { it.path("_source").path("title").asString("").takeIf { title -> title.isNotBlank() } }
-            .minByOrNull { abs(it.length - suggestion.length) }
+        return root.path("hits").path("hits").path(0).path("_source").path("title").asString("").takeIf { it.isNotBlank() }
     }
 
-    private fun bestSuggestions(primary: List<Suggestion>, keyword: String): List<Suggestion> {
+    private fun retryUnspaced(primary: List<Candidate>, keyword: String): List<Candidate> {
         val stripped = keyword.replace(WHITESPACE, "")
         if (stripped == keyword || stripped.isBlank()) return primary
 
         val request = Request("POST", BookIndex.SEARCH_PATH)
         request.setJsonEntity("""{ ${suggestClause(stripped)} "size": 0 }""")
         val response = restClient.performRequest(request)
-        val retried = extractSuggestions(
+        val retried = selectJamoCandidates(
             objectMapper.readTree(EntityUtils.toString(response.entity)),
             HangulJamo.decompose(stripped),
             keyword,
@@ -229,20 +226,20 @@ class OpenSearchBookSearchAdapter(
           },
     """.trimIndent()
 
-    private data class Suggestion(val text: String, val score: Double)
+    private data class Candidate(val text: String, val score: Double)
 
-    private fun extractSuggestions(root: JsonNode, jamoText: String, keyword: String): List<Suggestion> {
-        val typed = flatten(keyword)
+    private fun selectJamoCandidates(root: JsonNode, jamoText: String, keyword: String): List<Candidate> {
+        val typed = asNgramText(keyword)
         val options = root.path("suggest").path(BookIndex.TITLE_SUGGEST_NAME).path(0).path("options")
             .mapNotNull { option ->
                 option.path("text").asString("").takeIf { it.isNotBlank() }
-                    ?.let { Suggestion(it, option.path("score").asDouble(0.0)) }
+                    ?.let { Candidate(it, option.path("score").asDouble(0.0)) }
             }
-            .filter { flatten(HangulJamo.compose(it.text)) != typed }
+            .filter { asNgramText(HangulJamo.compose(it.text)) != typed }
         val scoreFloor = (options.maxOfOrNull { it.score } ?: return emptyList()) * SUGGEST_SCORE_FLOOR_RATIO
         return options.filter { it.score >= scoreFloor }
             .sortedWith(compareBy({ editDistance(jamoText, it.text) }, { -it.score }))
-            .map { Suggestion(HangulJamo.compose(it.text), it.score) }
+            .map { Candidate(HangulJamo.compose(it.text), it.score) }
     }
 
     private fun editDistance(a: String, b: String): Int {
@@ -265,11 +262,10 @@ class OpenSearchBookSearchAdapter(
     companion object {
 
         private const val SUGGESTION_SIZE = 3
-        private const val NGRAM_MIN_SHOULD_MATCH = "3<80%"
-        private const val NGRAM_LOOSE_MIN_LENGTH = 4
+        private const val UNORDERED_NGRAM_MIN_SHOULD_MATCH = "3<80%"
+        private const val UNORDERED_NGRAM_MIN_LENGTH = 4
         private const val SUGGEST_SEARCH_WIDTH = 15
         private const val SUGGEST_SCORE_FLOOR_RATIO = 0.5
-        private const val RESOLVE_CANDIDATES = 5
         private const val SUGGEST_CONFIDENCE = 0.9
 
         private val WHITESPACE = Regex("\\s+")

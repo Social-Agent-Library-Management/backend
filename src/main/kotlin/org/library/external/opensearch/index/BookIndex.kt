@@ -12,7 +12,7 @@ object BookIndex {
 
     const val TITLE_JAMO_FIELD = "title.jamo"
 
-    const val TITLE_JAMO_TRIGRAM_FIELD = "title.jamotri"
+    const val TITLE_JAMO_TRIGRAM_FIELD = "title.jamo_trigram"
     const val TITLE_SUGGEST_GRAM_SIZE = 3
 
     const val TITLE_NGRAM_FIELD = "title.ngram"
