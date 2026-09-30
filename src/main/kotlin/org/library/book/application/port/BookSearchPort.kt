@@ -11,4 +11,5 @@ interface BookSearchPort {
 data class BookSearchResult(
     val page: Page<BookDocument>,
     val suggestions: List<String>,
+    val degraded: Boolean = false,
 )

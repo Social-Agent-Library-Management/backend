@@ -18,6 +18,7 @@ class SearchBooksService(
             books = result.page.content,
             pagination = Pagination.from(result.page),
             suggestions = result.suggestions,
+            degraded = result.degraded,
         )
     }
 
@@ -30,5 +31,7 @@ class SearchBooksService(
             example = "[\"기억\"]",
         )
         val suggestions: List<String>,
+        @Schema(description = "검색 엔진 장애로 RDB 대체 조회한 결과인지 여부 (true면 오타 추천·관련도 정렬 없음)")
+        val degraded: Boolean,
     )
 }
