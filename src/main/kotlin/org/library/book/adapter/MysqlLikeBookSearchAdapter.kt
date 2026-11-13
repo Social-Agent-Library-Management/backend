@@ -7,14 +7,14 @@ import org.library.book.domain.repository.BookRepository
 import org.library.bookitem.domain.BookItemRepository
 import org.library.bookitem.domain.countActiveItemsByBookId
 import org.library.core.presentation.PageRequestParams
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
 @Transactional(readOnly = true)
-@ConditionalOnProperty(name = ["search.engine"], havingValue = "mysql", matchIfMissing = true)
+@ConditionalOnExpression("'\${search.engine:mysql}' == 'mysql' or '\${search.engine:mysql}' == 'opensearch'")
 class MysqlLikeBookSearchAdapter(
     private val bookRepository: BookRepository,
     private val bookItemRepository: BookItemRepository,

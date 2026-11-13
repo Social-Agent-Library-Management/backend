@@ -1,6 +1,7 @@
 package org.library.book.adapter
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.util.EntityUtils
 import org.library.book.application.port.BookDocument
 import org.library.book.application.port.BookSearchPort
@@ -11,7 +12,9 @@ import org.library.core.presentation.PageRequestParams
 import org.library.external.opensearch.index.BookIndex
 import org.library.external.opensearch.index.HangulJamo
 import org.opensearch.client.Request
+import org.opensearch.client.RequestOptions
 import org.opensearch.client.RestClient
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.data.domain.PageImpl
 import org.springframework.stereotype.Component
@@ -26,7 +29,19 @@ class OpenSearchBookSearchAdapter(
     private val restClient: RestClient,
     private val bookItemRepository: BookItemRepository,
     private val objectMapper: ObjectMapper,
+    @Value("\${search.timeout.connect-millis:500}") connectTimeoutMillis: Int,
+    @Value("\${search.timeout.socket-millis:1000}") socketTimeoutMillis: Int,
 ) : BookSearchPort {
+
+    private val searchOptions: RequestOptions = RequestOptions.DEFAULT.toBuilder()
+        .setRequestConfig(
+            RequestConfig.custom()
+                .setConnectTimeout(connectTimeoutMillis)
+                .setConnectionRequestTimeout(connectTimeoutMillis)
+                .setSocketTimeout(socketTimeoutMillis)
+                .build(),
+        )
+        .build()
 
     override fun search(query: String?, page: PageRequestParams): BookSearchResult {
         val pageRequest = page.toPageRequest()
@@ -63,7 +78,7 @@ class OpenSearchBookSearchAdapter(
             }
         """.trimIndent()
 
-        val request = Request("POST", BookIndex.SEARCH_PATH)
+        val request = searchRequest()
         request.setJsonEntity(requestBody)
         val response = restClient.performRequest(request)
         val root = objectMapper.readTree(EntityUtils.toString(response.entity))
@@ -138,13 +153,15 @@ class OpenSearchBookSearchAdapter(
         }
     }
 
+    private fun searchRequest(): Request = Request("POST", BookIndex.SEARCH_PATH).apply { options = searchOptions }
+
     private fun asNgramText(text: String): String =
         text.filter { it.isLetterOrDigit() }.lowercase()
 
     private fun unorderedNgramCandidates(keyword: String): List<String> {
         if (asNgramText(keyword).length < UNORDERED_NGRAM_MIN_LENGTH) return emptyList()
 
-        val request = Request("POST", BookIndex.SEARCH_PATH)
+        val request = searchRequest()
         request.setJsonEntity(
             """
             {
@@ -199,7 +216,7 @@ class OpenSearchBookSearchAdapter(
     private fun multiSearch(bodies: List<String>): List<JsonNode> {
         if (bodies.isEmpty()) return emptyList()
 
-        val request = Request("POST", BookIndex.MULTI_SEARCH_PATH)
+        val request = Request("POST", BookIndex.MULTI_SEARCH_PATH).apply { options = searchOptions }
         request.setJsonEntity(
             bodies.joinToString(separator = "") { "{}\n${objectMapper.writeValueAsString(objectMapper.readTree(it))}\n" },
         )
